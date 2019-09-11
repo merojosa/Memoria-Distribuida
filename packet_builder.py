@@ -26,7 +26,5 @@ def create(team_id, sensor_id, sensor_type, data):
         new_sequence = random.randint(0, 200)
     last_sequence = new_sequence
 
-    print(int.from_bytes(sensor_id, "big"))
-
     return struct.pack(FORMAT, new_sequence, timestamp, team_id, sensor_id, sensor_type, data)
     pass
