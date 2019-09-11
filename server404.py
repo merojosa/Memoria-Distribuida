@@ -2,6 +2,7 @@ import socket
 import struct
 import packet_builder
 import datetime
+import file_manager
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
@@ -23,3 +24,5 @@ while True:
     data_packet = str(packet[5])
 
     print(sequence + ' ' + date + ' ' + team_id + ' ' + sensor_id + ' ' + sensor_type + ' ' + data_packet)
+
+    file_manager.save_data(date, team_id, sensor_id, sensor_type, data_packet)
