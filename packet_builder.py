@@ -4,7 +4,7 @@ import random
 import datetime
 import time
 
-# unsigned char, string of 3 bytes, unsigned char, string of 3 bytes, unsigned char, float.
+# unsigned char, string of 3 bytes, unsigned char, 3 bytes, unsigned char, float.
 FORMAT = 'BIB3sBf'
 last_sequence = 0
 
@@ -25,6 +25,8 @@ def create(team_id, sensor_id, sensor_type, data):
     while (new_sequence == last_sequence):
         new_sequence = random.randint(0, 200)
     last_sequence = new_sequence
+
+    print(int.from_bytes(sensor_id, "big"))
 
     return struct.pack(FORMAT, new_sequence, timestamp, team_id, sensor_id, sensor_type, data)
     pass

@@ -19,9 +19,10 @@ while True:
     sequence = str(packet[0])
     date = str(datetime.datetime.fromtimestamp(packet[1]))
     team_id = str(packet[2])
-    sensor_id = str(packet[3])
+    sensor_id = str(int.from_bytes(packet[3], "big"))
     sensor_type = str(packet[4])
     data_packet = str(packet[5])
+
 
     print(sequence + ' ' + date + ' ' + team_id + ' ' + sensor_id + ' ' + sensor_type + ' ' + data_packet)
 
