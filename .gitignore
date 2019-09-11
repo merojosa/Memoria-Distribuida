@@ -228,3 +228,4 @@ dmypy.json
 
 #Jose-Andres
 .idea/
+*.txt
