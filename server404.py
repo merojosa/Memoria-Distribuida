@@ -25,5 +25,8 @@ while True:
 
 
     print(sequence + ' ' + date + ' ' + team_id + ' ' + sensor_id + ' ' + sensor_type + ' ' + data_packet)
-
+    
     file_manager.save_data(date, team_id, sensor_id, sensor_type, data_packet)
+
+    ack = ack_builder.create(sensor_id, sequence)
+    sock.sendto(ack, (UDP_IP, UDP_PORT))
