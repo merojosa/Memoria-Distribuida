@@ -16,14 +16,12 @@ while True:
     print ("Received message: ")
     packet = struct.unpack(packet_builder.FORMAT, data)
 
-    sequence = str(packet[0])
-    date = str(datetime.datetime.fromtimestamp(packet[1]))
-    team_id = str(packet[2])
-    sensor_id = str(int.from_bytes(packet[3], "big"))
-    sensor_type = str(packet[4])
-    data_packet = str(packet[5])
+    sequence = packet[0]
+    date = datetime.datetime.fromtimestamp(packet[1])
+    team_id = packet[2]
+    sensor_id = int.from_bytes(packet[3], "big")
+    sensor_type = packet[4]
+    data_packet = packet[5]
 
-
-    print(sequence + ' ' + date + ' ' + team_id + ' ' + sensor_id + ' ' + sensor_type + ' ' + data_packet)
-
+    print(packet)
     file_manager.save_data(date, team_id, sensor_id, sensor_type, data_packet)
