@@ -5,8 +5,8 @@ import datetime
 import file_manager
 import time
 
-UDP_IP = "127.0.0.1"
-UDP_PORT = 5005
+UDP_IP = "10.1.137.79"
+UDP_PORT = 10002
 
 packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=25.3)
 packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=25.3)
