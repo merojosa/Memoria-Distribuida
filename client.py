@@ -24,7 +24,7 @@ sock = socket.socket(socket.AF_INET, # Internet
 sock.bind((UDP_IP, UDP_PORT))
 
 
-while(true):
+while True:
   sock.sendto(packetMov, (UDP_IP, UDP_PORT))
   sock.sendto(packetTemp, (UDP_IP, UDP_PORT))
   sock.sendto(packetHum, (UDP_IP, UDP_PORT))
