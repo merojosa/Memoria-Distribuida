@@ -4,6 +4,7 @@ import ack_builder
 import datetime
 import file_manager
 import time
+import packet_builder
 
 UDP_IP = "10.1.137.79"
 UDP_PORT = 10002
@@ -23,7 +24,7 @@ sock = socket.socket(socket.AF_INET, # Internet
 sock.bind((UDP_IP, UDP_PORT))
 
 
-while(true):
+while True:
   sock.sendto(packetMov, (UDP_IP, UDP_PORT))
   sock.sendto(packetTemp, (UDP_IP, UDP_PORT))
   sock.sendto(packetHum, (UDP_IP, UDP_PORT))
