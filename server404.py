@@ -11,8 +11,11 @@ sock = socket.socket(socket.AF_INET,    # Internet
                      socket.SOCK_DGRAM) # UDP
 sock.bind((UDP_IP, UDP_PORT))
 
-while True:
-    data, addr = sock.recvfrom(1024)    # Buffer size is 1024 bytes
+def send(team_id, sensor_id, sequence):
+    ack = ack_builder.create(team_id, sensor_id, sequence)
+    sock.sendto(ack, (UDP_IP, UDP_PORT))
+
+def recieve(data, addr):
     print ("Received message: ")
     packet = struct.unpack(packet_builder.FORMAT, data)
 
@@ -23,10 +26,10 @@ while True:
     sensor_type = str(packet[4])
     data_packet = str(packet[5])
 
-
     print(sequence + ' ' + date + ' ' + team_id + ' ' + sensor_id + ' ' + sensor_type + ' ' + data_packet)
-    
     file_manager.save_data(date, team_id, sensor_id, sensor_type, data_packet)
 
-    ack = ack_builder.create(sequence, sensor_id)
-    sock.sendto(ack, (UDP_IP, UDP_PORT))
+def listen():
+    while True:
+        data, addr = sock.recvfrom(1024)    # Buffer size is 1024 bytes
+        recieve(data, addr)

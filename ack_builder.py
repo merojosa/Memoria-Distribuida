@@ -9,6 +9,6 @@ sequence = 0
 
 # Pending: dealing with date.
 # Create a packet acording to the parameters, is a struct with a specific format (FORMAT)
-def create(sensor_id, sequence):
+def create(team_id, sensor_id, sequence):
     return struct.pack(FORMAT, sequence, team_id, sensor_id)
     pass
