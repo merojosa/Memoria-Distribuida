@@ -26,7 +26,7 @@ def recieve(data, addr):
     sensor_type = str(packet[4])
     data_packet = str(packet[5])
 
-    print(sequence + ' ' + date + ' ' + team_id + ' ' + sensor_id + ' ' + sensor_type + ' ' + data_packet)
+    print(packet)
     file_manager.save_data(date, team_id, sensor_id, sensor_type, data_packet)
 
 def listen():
