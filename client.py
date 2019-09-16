@@ -1,7 +1,5 @@
-import ack_builder
+
 import datetime
-import file_manager
-import packet_builder
 import queue
 import socket
 import struct
@@ -9,10 +7,21 @@ import threading
 import time
 
 
+import ack_builder
+import file_manager
+import packet_builder
+import dht11_manager
+import motion_manager
+
+
 def crearPaquete(cola_paquetes):
-    packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=25.3)
-    packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=25.3)
-    packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=25.3)
+    temperature, humidity = dht11_manager.get_data();
+    movement = motion_manager.get_data();
+
+    packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=movement)
+    packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=temperature)
+    packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=humidity)
+
 
     cola_paquetes.put(packetMov)
     cola_paquetes.put(packetTemp)
