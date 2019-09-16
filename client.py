@@ -1,44 +1,73 @@
-import socket
-import struct
 import ack_builder
 import datetime
 import file_manager
-import time
 import packet_builder
-
-UDP_IP = "10.1.137.79"
-UDP_PORT = 10002
-
-packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=25.3)
-packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=25.3)
-packetHum =packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=25.3)
-
-print ("UDP target IP: " + str(UDP_IP))
-print ("UDP target port: " + str(UDP_PORT))
-print ("PacketMov: " + str(struct.unpack(packet_builder.FORMAT, packetMov)))
-print ("PacketTemp: " + str(struct.unpack(packet_builder.FORMAT, packetTemp)))
-print ("PacketHum: " + str(struct.unpack(packet_builder.FORMAT, packetHum)))
-
-sock = socket.socket(socket.AF_INET, # Internet
-                     socket.SOCK_DGRAM) # UDP
-sock.bind((UDP_IP, UDP_PORT))
+import queue
+import socket
+import struct
+import threading
+import time
 
 
-while True:
-  sock.sendto(packetMov, (UDP_IP, UDP_PORT))
-  sock.sendto(packetTemp, (UDP_IP, UDP_PORT))
-  sock.sendto(packetHum, (UDP_IP, UDP_PORT))
-  time.sleep(1)
-  
-  #data, addr = sock.recvfrom(1024)    # Buffer size is 1024 bytes
-  #print ("ACK: ")
-  #packet = struct.unpack(ack_builder.FORMAT, data)
+def crearPaquete(cola_paquetes):
+    packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=25.3)
+    packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=25.3)
+    packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=25.3)
 
-  #sequence = str(packet[0])
-  #date = str(datetime.datetime.fromtimestamp(packet[1]))
-  #team_id = str(packet[2])
-  #sensor_id = str(int.from_bytes(packet[3], "big"))
-  #sensor_type = str(packet[4])
-  
-  #print(sequence + ' ' + date + ' ' + team_id + ' ' + sensor_id + ' ' + sensor_type)
+    cola_paquetes.put(packetMov)
+    cola_paquetes.put(packetTemp)
+    cola_paquetes.put(packetHum)
 
+
+def enviarPaquete(sock, SERVER_IP, SERVER_PORT, cola_paquetes):
+    while True:
+        packet = cola_paquetes.get()
+        data = struct.unpack(packet_builder.FORMAT, packet)
+        sequence = data[0]
+        team_id = data[2]
+        sensor_id = data[3]
+
+        while True:
+
+            sock.settimeout(1)
+
+            try:
+                sock.sendto(packet, (SERVER_IP, SERVER_PORT))
+                ack, addr = sock.recvfrom(1024)
+
+                data = struct.unpack(ack_builder.FORMAT, ack)
+
+                if (sequence == data[0] and team_id == data[1] and sensor_id == data[2] and (SERVER_IP, SERVER_PORT) == addr):
+                    print("ACK Correcto")
+                    break
+                else:
+                    print("ACK Incorrecto")
+
+            except socket.timeout:
+                print("ACK Timeout")
+                continue
+
+
+def main():
+    UDP_IP = "127.0.0.1"
+    UDP_PORT = 6000
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((UDP_IP, UDP_PORT))
+
+    SERVER_IP = "127.0.0.1"
+    SERVER_PORT = 5000
+
+    cola_paquetes = queue.Queue()
+
+    procesoCrearPaquete = threading.Thread(target=crearPaquete, args=(cola_paquetes,))
+    procesoEnviarPaquete = threading.Thread(target=enviarPaquete, args=(sock, SERVER_IP, SERVER_PORT, cola_paquetes,))
+
+    procesoCrearPaquete.start()
+    procesoEnviarPaquete.start()
+
+    procesoCrearPaquete.join()
+    procesoEnviarPaquete.join()
+
+
+main()
