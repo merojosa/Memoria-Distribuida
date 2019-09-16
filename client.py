@@ -15,17 +15,19 @@ import motion_manager
 
 
 def crearPaquete(cola_paquetes):
-    temperature, humidity = dht11_manager.get_data();
-    movement = motion_manager.get_data();
+    while True:
+        time.sleep(1)
+        temperature, humidity = dht11_manager.get_data();
+        movement = motion_manager.get_data();
 
-    packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=movement)
-    packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=temperature)
-    packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=humidity)
+        packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=temperature)
+        packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=humidity)
+        packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=movement)
 
 
-    cola_paquetes.put(packetMov)
-    cola_paquetes.put(packetTemp)
-    cola_paquetes.put(packetHum)
+        cola_paquetes.put(packetMov)
+        cola_paquetes.put(packetTemp)
+        cola_paquetes.put(packetHum)
 
 
 def enviarPaquete(sock, SERVER_IP, SERVER_PORT, cola_paquetes):
@@ -58,13 +60,13 @@ def enviarPaquete(sock, SERVER_IP, SERVER_PORT, cola_paquetes):
 
 
 def main():
-    UDP_IP = "127.0.0.1"
+    UDP_IP = "10.1.137.74"
     UDP_PORT = 6000
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((UDP_IP, UDP_PORT))
 
-    SERVER_IP = "127.0.0.1"
+    SERVER_IP = "10.1.137.45"
     SERVER_PORT = 5000
 
     cola_paquetes = queue.Queue()

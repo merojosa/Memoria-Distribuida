@@ -1,5 +1,5 @@
-import RPi.GPIO as GPIO
 import dht11
+import RPi.GPIO as GPIO
 import time
 import datetime
 
@@ -13,16 +13,14 @@ def get_data():
     # Read data
     instance = dht11.DHT11(PIN)
 
-    try:
-        result = instance.read()
-	    if result.is_valid():
-	        print("Temperature: %-3.1f C" % result.temperature)
-	        print("Humidity: %-3.1f %%" % result.humidity)
-            return result.temperature, result.humidity
-        else:
-            print("Error del dht11 sensor: 1")
 
-        # Every 1 second get data
-	    time.sleep(1)
+    result = instance.read()
+    if result.is_valid():
+        return result.temperature, result.humidity
+    else:
+        print("Error del dht11 sensor: 1")
+        return -1.0, -1.0
 
-    GPIO.cleanup()
+
+
+
