@@ -24,7 +24,7 @@ def procesarPaquete(sock, cola_paquetes_espera, cola_paquetes_procesados):
 
         data = struct.unpack(packet_builder.FORMAT, packet)
         date = str(datetime.datetime.fromtimestamp(data[1]))
-        team_id = str(data[2])
+        team_id = int(data[2])
         sensor_id = str(int.from_bytes(data[3], "big"))
         sensor_type = str(data[4])
         data_packet = str(data[5])
