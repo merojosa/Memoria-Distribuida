@@ -27,6 +27,7 @@ def crearPaquete(cola_paquetes):
         else:
             timeout = 1 - elapsed  # By passing this, it will take exactly 1 second in total to get the data.
 
+        movement = motion_manager.get_data(timeout)
 
         packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=temperature)
         packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=humidity)
