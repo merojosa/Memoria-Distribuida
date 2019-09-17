@@ -16,14 +16,21 @@ import motion_manager
 
 def crearPaquete(cola_paquetes):
     while True:
-        time.sleep(1)
-        temperature, humidity = dht11_manager.get_data();
-        movement = motion_manager.get_data();
+        # Get how much it takes in seconds.
+        start = time.time()
+        temperature, humidity = dht11_manager.get_data()
+        end = time.time()
+        elapsed = end - start
+
+        if(elapsed > 1):
+            timeout = 0
+        else:
+            timeout = 1 - elapsed  # By passing this, it will take exactly 1 second in total to get the data.
+
 
         packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=temperature)
         packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=humidity)
         packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=0,  data=movement)
-
 
         cola_paquetes.put(packetMov)
         cola_paquetes.put(packetTemp)
