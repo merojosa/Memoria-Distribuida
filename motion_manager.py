@@ -1,19 +1,24 @@
-import time
+from datetime import *
 import RPi.GPIO as GPIO
 from gpiozero import MotionSensor
 
-def get_data(seconds_timeout):
+def get_data(timeout):
     PIN = 4
-
-    timeout_start = time.time()
-
+    
     GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
     pir = MotionSensor(PIN)
+    
+    t1 = datetime.now()
+    
+    data = 0.0
+    
+    current_date = datetime.now()
 
-    # While with a timeout
-    while time.time() < timeout_start + seconds_timeout:
-        time.sleep(0.01) # Not to overwhelm.
+    while (datetime.now() - t1).seconds <= timeout:
+
         if pir.motion_detected:
-            return 1.0
+            data = 1.0
+            current_date = datetime.now()     
 
-    return 0.0
+    return data, current_date
