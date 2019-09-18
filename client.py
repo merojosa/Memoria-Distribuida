@@ -1,4 +1,3 @@
-
 import datetime
 import queue
 import socket
@@ -13,7 +12,7 @@ import dht11_manager
 import motion_manager
 
         
-def crearPaqueteMovimiento(cola_paquetes):
+def create_motion_packet(queue_packets):
     
     timeout = 1.0
     
@@ -21,9 +20,9 @@ def crearPaqueteMovimiento(cola_paquetes):
         # Siempre dura 1 segundo
         movement, current_time = motion_manager.get_data(timeout)
         packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x01',  sensor_type=0,  data=movement, current_date=current_time)
-        cola_paquetes.put(packetMov)
+        queue_packets.put(packetMov)
 
-def crearPaqueteDHT11(cola_paquetes):
+def create_DHT11_packet(queue_packets):
     
     timeout = 5.0
     
@@ -33,13 +32,13 @@ def crearPaqueteDHT11(cola_paquetes):
         packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x08',  sensor_type=0,  data=temperature, current_date=current_time)
         packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x06',  sensor_type=0,  data=humidity, current_date=current_time)
         
-        cola_paquetes.put(packetTemp)
-        cola_paquetes.put(packetHum)
+        queue_packets.put(packetTemp)
+        queue_packets.put(packetHum)
         
 
-def enviarPaquete(sock, SERVER_IP, SERVER_PORT, cola_paquetes):
+def send_packet(sock, SERVER_IP, SERVER_PORT, queue_packets):
     while True:
-        packet = cola_paquetes.get()
+        packet = queue_packets.get()
         data = struct.unpack(packet_builder.FORMAT, packet)
         sequence = data[0]
         team_id = data[2]
@@ -76,20 +75,20 @@ def main():
     SERVER_IP = "127.0.0.1"
     SERVER_PORT = 5000
 
-    cola_paquetes = queue.Queue()
+    queue_packets = queue.Queue()
 
-    procesoCrearPaqueteMovimiento = threading.Thread(target=crearPaqueteMovimiento, args=(cola_paquetes,))
-    procesoCrearPaqueteDHT11 = threading.Thread(target=crearPaqueteDHT11, args=(cola_paquetes,))
+    create_motion_packet_process = threading.Thread(target=create_motion_packet, args=(queue_packets,))
+    create_dht11_packet_process = threading.Thread(target=create_DHT11_packet, args=(queue_packets,))
 
-    procesoEnviarPaquete = threading.Thread(target=enviarPaquete, args=(sock, SERVER_IP, SERVER_PORT, cola_paquetes,))
+    send_packet_process = threading.Thread(target=send_packet, args=(sock, SERVER_IP, SERVER_PORT, queue_packets,))
 
-    procesoCrearPaqueteMovimiento.start()
-    procesoCrearPaqueteDHT11.start()
-    procesoEnviarPaquete.start()
+    create_motion_packet_process.start()
+    create_dht11_packet_process.start()
+    send_packet_process.start()
 
-    procesoCrearPaqueteMovimiento.join()
-    procesoCrearPaqueteDHT11.join()
-    procesoEnviarPaquete.join()
+    create_motion_packet_process.join()
+    create_dht11_packet_process.join()
+    send_packet_process.join()
 
 
 main()

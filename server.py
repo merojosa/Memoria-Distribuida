@@ -1,26 +1,27 @@
-import ack_builder
 import datetime
-import file_manager
-import packet_builder
 import queue
 import random
 import socket
 import struct
 import threading
 
+import ack_builder
+import file_manager
+import packet_builder
 
-def recibirPaquete(sock, cola_paquetes_espera):
+
+def receive_packet(sock, waiting_queue_packets):
     while True:
         packet, addr = sock.recvfrom(1024)
-        cola_paquetes_espera.put((packet, addr))
+        waiting_queue_packets.put((packet, addr))
 
 
-def procesarPaquete(sock, cola_paquetes_espera, cola_paquetes_procesados):
+def process_packet(sock, waiting_queue_packets, processed_queue_packets):
 
-    ultima_secuencia = -1
+    last_sequence = -1
 
     while True:
-        packet, addr = cola_paquetes_espera.get()
+        packet, addr = waiting_queue_packets.get()
 
         data = struct.unpack(packet_builder.FORMAT, packet)
         date = str(datetime.datetime.fromtimestamp(data[1]))
@@ -29,19 +30,19 @@ def procesarPaquete(sock, cola_paquetes_espera, cola_paquetes_procesados):
         sensor_type = str(data[4])
         data_packet = str(data[5])
 
-        if ultima_secuencia != data[0]:
+        if last_sequence != data[0]:
             file_manager.save_data(date, team_id, sensor_id, sensor_type, data_packet)
-            ultima_secuencia = data[0]
+            last_sequence = data[0]
             print("Paquete almacenado")
         else:
             print("Paquete descartado")
 
-        cola_paquetes_procesados.put((packet, addr))
+        processed_queue_packets.put((packet, addr))
 
 
-def enviarACK(sock, cola_paquetes_procesados):
+def send_ACK(sock, processed_queue_packets):
     while True:
-        packet, addr = cola_paquetes_procesados.get()
+        packet, addr = processed_queue_packets.get()
 
         data = struct.unpack(packet_builder.FORMAT, packet)
         ack = ack_builder.create(team_id=data[2], sensor_id=data[3], sequence=data[0])
@@ -57,20 +58,20 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((UDP_IP, UDP_PORT))
 
-    cola_paquetes_espera = queue.Queue()
-    cola_paquetes_procesados = queue.Queue()
+    waiting_queue_packets = queue.Queue()
+    processed_queue_packets = queue.Queue()
 
-    procesoRecibirPaquete = threading.Thread(target=recibirPaquete, args=(sock, cola_paquetes_espera,))
-    procesoProcesarPaquete = threading.Thread(target=procesarPaquete, args=(sock, cola_paquetes_espera, cola_paquetes_procesados,))
-    procesoEnviarACK = threading.Thread(target=enviarACK, args=(sock, cola_paquetes_procesados,))
+    receive_packet_process = threading.Thread(target=receive_packet, args=(sock, waiting_queue_packets,))
+    process_packt_process = threading.Thread(target=process_packet, args=(sock, waiting_queue_packets, processed_queue_packets,))
+    send_ACK_process = threading.Thread(target=send_ACK, args=(sock, processed_queue_packets,))
 
-    procesoRecibirPaquete.start()
-    procesoProcesarPaquete.start()
-    procesoEnviarACK.start()
+    receive_packet_process.start()
+    process_packt_process.start()
+    send_ACK_process.start()
 
-    procesoRecibirPaquete.join()
-    procesoProcesarPaquete.join()
-    procesoEnviarACK.join()
+    receive_packet_process.join()
+    process_packt_process.join()
+    send_ACK_process.join()
 
 
 main()
