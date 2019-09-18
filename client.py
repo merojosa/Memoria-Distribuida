@@ -10,7 +10,7 @@ import file_manager
 import packet_builder
 import dht11_manager
 import motion_manager
-
+from enum_sensor_type import *
 
 def create_motion_packet(queue_packets):
 
@@ -19,7 +19,7 @@ def create_motion_packet(queue_packets):
     while True:
         # Siempre dura 1 segundo
         movement, current_time = motion_manager.get_data(timeout)
-        packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x01',  sensor_type=0,  data=movement, current_date=current_time)
+        packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x01',  sensor_type=Sensor_Type.MOVEMENT.value,  data=movement, current_date=current_time)
         queue_packets.put(packetMov)
 
 def create_DHT11_packet(queue_packets):
@@ -29,8 +29,8 @@ def create_DHT11_packet(queue_packets):
     while True:
         temperature, humidity, current_time = dht11_manager.get_data(timeout)
 
-        packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x08',  sensor_type=0,  data=temperature, current_date=current_time)
-        packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x06',  sensor_type=0,  data=humidity, current_date=current_time)
+        packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x08',  sensor_type=Sensor_Type.TEMPERATURE.value,  data=temperature, current_date=current_time)
+        packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x06',  sensor_type=Sensor_Type.HUMIDITY.value,  data=humidity, current_date=current_time)
 
         queue_packets.put(packetTemp)
         queue_packets.put(packetHum)

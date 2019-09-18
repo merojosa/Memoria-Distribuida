@@ -8,6 +8,7 @@ import time
 import ack_builder
 import file_manager
 import packet_builder
+from enum_sensor_type import *
 
 def create_motion_packet(queue_packets):
 
@@ -18,7 +19,7 @@ def create_motion_packet(queue_packets):
 
         movement = 1.0
         current_time = datetime.datetime.now()
-        packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x01',  sensor_type=0,  data=movement, current_date=current_time)
+        packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x01',  sensor_type=Sensor_Type.MOVEMENT.value,  data=movement, current_date=current_time)
         queue_packets.put(packetMov)
 
 def create_DHT11_packet(queue_packets):
@@ -33,8 +34,8 @@ def create_DHT11_packet(queue_packets):
         current_time = datetime.datetime.now()
 
 
-        packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x08',  sensor_type=0,  data=temperature, current_date=current_time)
-        packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x06',  sensor_type=0,  data=humidity, current_date=current_time)
+        packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x08',  sensor_type=Sensor_Type.TEMPERATURE.value,  data=temperature, current_date=current_time)
+        packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x06',  sensor_type=Sensor_Type.HUMIDITY.value,  data=humidity, current_date=current_time)
 
         queue_packets.put(packetTemp)
         queue_packets.put(packetHum)
