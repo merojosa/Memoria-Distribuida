@@ -66,13 +66,13 @@ def send_packet(sock, SERVER_IP, SERVER_PORT, queue_packets):
 
 
 def main():
-    UDP_IP = "127.0.0.1"
+    UDP_IP = "10.1.137.74"
     UDP_PORT = 6000
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((UDP_IP, UDP_PORT))
 
-    SERVER_IP = "127.0.0.1"
+    SERVER_IP = "10.1.137.67"
     SERVER_PORT = 5000
 
     queue_packets = queue.Queue()

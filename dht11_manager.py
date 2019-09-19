@@ -16,6 +16,7 @@ def get_data(timeout):
     hum = 0.0
     
     t1 = datetime.now()
+    current_date = datetime.now()
     
     while (datetime.now() - t1).seconds <= timeout:
 
