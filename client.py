@@ -19,7 +19,7 @@ def create_motion_packet(queue_packets):
     while True:
         # Siempre dura 1 segundo
         movement, current_time = motion_manager.get_data(timeout)
-        packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x01',  sensor_type=0,  data=movement, current_date=current_time)
+        packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x01',  sensor_type=1,  data=movement, current_date=current_time)
         queue_packets.put(packetMov)
 
 def create_DHT11_packet(queue_packets):
@@ -29,8 +29,8 @@ def create_DHT11_packet(queue_packets):
     while True:
         temperature, humidity, current_time = dht11_manager.get_data(timeout)
         
-        packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x08',  sensor_type=0,  data=temperature, current_date=current_time)
-        packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x06',  sensor_type=0,  data=humidity, current_date=current_time)
+        packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x08',  sensor_type=6,  data=temperature, current_date=current_time)
+        packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x06',  sensor_type=8,  data=humidity, current_date=current_time)
         
         queue_packets.put(packetTemp)
         queue_packets.put(packetHum)
@@ -68,8 +68,8 @@ def send_packet(sock, SERVER_IP, SERVER_PORT, queue_packets):
 def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    SERVER_IP = "10.1.137.67"
-    SERVER_PORT = 5000
+    SERVER_IP = "10.1.137.79"
+    SERVER_PORT = 10000
 
     queue_packets = queue.Queue()
 
@@ -85,6 +85,7 @@ def main():
     create_motion_packet_process.join()
     create_dht11_packet_process.join()
     send_packet_process.join()
-
+    
+    
 
 main()
