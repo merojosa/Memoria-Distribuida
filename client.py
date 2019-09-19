@@ -66,14 +66,10 @@ def send_packet(sock, SERVER_IP, SERVER_PORT, queue_packets):
 
 
 def main():
-    UDP_IP = "127.0.0.1"
-    UDP_PORT = 6000
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((UDP_IP, UDP_PORT))
 
-    SERVER_IP = "127.0.0.1"
-    SERVER_PORT = 5000
+    SERVER_IP = "10.1.137.79"
+    SERVER_PORT = 10000
 
     queue_packets = queue.Queue()
 
@@ -89,6 +85,7 @@ def main():
     create_motion_packet_process.join()
     create_dht11_packet_process.join()
     send_packet_process.join()
-
+    
+    
 
 main()
