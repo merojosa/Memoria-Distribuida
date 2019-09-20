@@ -52,7 +52,7 @@ def send_ACK(sock, processed_queue_packets):
 
 
 def main():
-    UDP_IP = "10.1.137.74"
+    UDP_IP = "10.1.138.56"
     UDP_PORT = 5000
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
