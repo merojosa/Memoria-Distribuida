@@ -19,3 +19,14 @@ def save_new_file(name, data):
     file = open( "pages/" + name + ".page404", "x")
     file.write(data)
     file.close()
+
+def get_file_data(name):
+    file = open("pages/" + name + ".page404", "r")
+    data = file.read()
+    file.close()
+
+    return data
+
+def write_file(name, data):
+    file = file = open("pages/" + name + ".page404", "w")
+    file.write(data)
