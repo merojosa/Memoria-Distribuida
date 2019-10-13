@@ -13,3 +13,9 @@ def save_data(date, team_id, sensor_id, sensor_type, data_packet):
 
     else:
         print("team_id no reconocido: " + team_id )
+
+def save_new_file(name, data):
+    # x = if the file exists, error.
+    file = open( "pages/" + name + ".page404", "x")
+    file.write(data)
+    file.close()
