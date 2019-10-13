@@ -87,6 +87,11 @@ def get_page_data(page_id):
     else:
         return file_manager.get_file_data(page_id)
 
-id = create_page()
+def get_pages(page_id_list):
+    
+    page_content_list = []
 
-# Read
+    for id in page_id_list:
+        page_content_list.append(get_page_data(id))
+
+    return page_content_list
