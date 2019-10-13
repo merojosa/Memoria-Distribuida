@@ -28,6 +28,7 @@ def new_page_number():
 
 # Falta escribir en disco.
 def write(page_id, offset, data):
+    global pages
 
     if(page_id in pages):
 
@@ -54,10 +55,11 @@ def save_page(page_id):
     pass
 
 def swap_from_primary_to_secondary(page_id):
+    global pages
+
     save_page(page_id)
     del pages[page_id]
 
-# Discard \n because isn't part of the data, \n is used for good looking.
 def get_page_size(page_id):
     return len(pages[page_id])
 
