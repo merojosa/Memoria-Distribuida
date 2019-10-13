@@ -82,7 +82,7 @@ def get_page_data(page_id):
     global pages
     global page_location_map
 
-    if(page_id in pages and page_location_map[page_id] == Page_Location.PRIMARY.value):
+    if(page_location_map[page_id] == Page_Location.PRIMARY.value):
         return pages[page_id]
     else:
         return file_manager.get_file_data(page_id)
