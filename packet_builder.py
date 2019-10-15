@@ -10,12 +10,9 @@ last_sequence = 0
 
 # Pending: dealing with date.
 # Create a packet acording to the parameters, is a struct with a specific format (FORMAT)
-def create(team_id, sensor_id, sensor_type, data):
+def create(team_id, sensor_id, sensor_type, data, current_date):
 
     global last_sequence
-
-    # Get current date.
-    current_date = datetime.datetime.now()
 
     # Convert the current date to timestamp.  For getting the datetime again: datetime.datetime.fromtimestamp(timestamp)
     timestamp = int(time.mktime(current_date.timetuple()))

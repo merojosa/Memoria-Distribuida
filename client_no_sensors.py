@@ -8,8 +8,6 @@ import time
 import ack_builder
 import file_manager
 import packet_builder
-import dht11_manager
-import motion_manager
 from enum_sensor_type import *
 
 def create_motion_packet(queue_packets):
@@ -17,8 +15,10 @@ def create_motion_packet(queue_packets):
     timeout = 1.0
 
     while True:
-        # Siempre dura 1 segundo
-        movement, current_time = motion_manager.get_data(timeout)
+        time.sleep(1.0)
+
+        movement = 1.0
+        current_time = datetime.datetime.now()
         packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x01',  sensor_type=Sensor_Type.MOVEMENT.value,  data=movement, current_date=current_time)
         queue_packets.put(packetMov)
 
@@ -27,7 +27,12 @@ def create_DHT11_packet(queue_packets):
     timeout = 5.0
 
     while True:
-        temperature, humidity, current_time = dht11_manager.get_data(timeout)
+        time.sleep(5.0)
+        temperature = 27.42
+        humidity = 60.5
+
+        current_time = datetime.datetime.now()
+
 
         packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x08',  sensor_type=Sensor_Type.TEMPERATURE.value,  data=temperature, current_date=current_time)
         packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x06',  sensor_type=Sensor_Type.HUMIDITY.value,  data=humidity, current_date=current_time)
@@ -66,10 +71,14 @@ def send_packet(sock, SERVER_IP, SERVER_PORT, queue_packets):
 
 
 def main():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    UDP_IP = "10.1.138.56"
+    UDP_PORT = 6000
 
-    SERVER_IP = "10.1.137.79"
-    SERVER_PORT = 10000
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((UDP_IP, UDP_PORT))
+
+    SERVER_IP = "10.1.138.56"
+    SERVER_PORT = 5000
 
     queue_packets = queue.Queue()
 
@@ -85,7 +94,6 @@ def main():
     create_motion_packet_process.join()
     create_dht11_packet_process.join()
     send_packet_process.join()
-    
-    
+
 
 main()
