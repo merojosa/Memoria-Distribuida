@@ -1,4 +1,5 @@
 import data_detector
+import os
 
 def save_data(date, team_id, sensor_id, sensor_type, data_packet):
 
@@ -14,19 +15,30 @@ def save_data(date, team_id, sensor_id, sensor_type, data_packet):
     else:
         print("team_id no reconocido: " + team_id )
 
-def save_new_file(name, data):
-    # x = if the file exists, error.
-    file = open( "pages/" + name + ".page404", "x")
+
+def save_new_file(path, name, data):
+
+    if(os.path.exists(path) == False):
+        os.makedirs(path)
+
+    # x = if the file exists, truncate and write.
+    file = open(path + name, "w")
     file.write(data)
     file.close()
 
-def get_file_data(name):
-    file = open("pages/" + name + ".page404", "r")
+def delete_file(path):
+    os.remove(path) 
+    
+
+def get_file_data(path):
+    file = open(path, "r")
     data = file.read()
     file.close()
 
     return data
 
-def write_file(name, data):
-    file = file = open("pages/" + name + ".page404", "w")
+
+def write_file(path, data):
+    file = file = open(path, "w")
     file.write(data)
+    file.close()
