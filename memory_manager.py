@@ -26,7 +26,6 @@ def new_page_number():
     return number
 
 
-# Falta escribir en disco.
 def write(page_id, offset, data):
     global pages
     global page_location_map
@@ -47,13 +46,14 @@ def write(page_id, offset, data):
     if(page_location_map[page_id] == Page_Location.PRIMARY.value):
         write_primary(page_id, new_data)
     else:
-        write_secondary(page_id, new_data)
-
+        swap_from_secondary_to_primary(page_id)
+        write_primary(page_id, new_data)
 
 def save_page(page_id):
     global pages
-    file_manager.save_new_file(page_id, pages[page_id])
+    file_manager.save_new_file("pages/", page_id + ".page404", pages[page_id])
     pass
+
 
 def swap_from_primary_to_secondary(page_id):
     global pages
@@ -61,10 +61,21 @@ def swap_from_primary_to_secondary(page_id):
 
     save_page(page_id)
     del pages[page_id]
-    page_location_map[page_id] = Page_Location.SECONDARY
+    page_location_map[page_id] = Page_Location.SECONDARY.value
+
+
+def swap_from_secondary_to_primary(page_id):
+    global pages
+    global page_location_map
+
+    pages[page_id] = get_page_data(page_id)
+    file_manager.delete_file("pages/" + page_id + ".page404")
+    page_location_map[page_id] = Page_Location.PRIMARY.value
+
 
 def get_page_size(page_id):
     return len(pages[page_id])
+
 
 def write_primary(page_id, data):
     global pages
@@ -74,9 +85,6 @@ def write_primary(page_id, data):
     if(get_page_size(page_id) >=  PAGE_SIZE):
         swap_from_primary_to_secondary(page_id)
 
-# Pending if it's correct to do this (write directly on disk)
-def write_secondary(page_id, data):
-    file_manager.write_file(page_id, data)
 
 def get_page_data(page_id):
     global pages
@@ -85,10 +93,11 @@ def get_page_data(page_id):
     if(page_location_map[page_id] == Page_Location.PRIMARY.value):
         return pages[page_id]
     else:
-        return file_manager.get_file_data(page_id)
+        return file_manager.get_file_data("pages/" + page_id + ".page404")
+
 
 def get_pages(page_id_list):
-    
+
     page_content_list = []
 
     for id in page_id_list:
