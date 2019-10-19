@@ -51,10 +51,10 @@ def write(page_id, data_interface):
 
 def save_page(page_id):
     global pages
-    file_manager.save_new_file("pages/", page_id + ".page404", pages[page_id])
+    file_manager.save_object("pages/", page_id + ".page404", pages[page_id])
     pass
 
-# FALTA ACTUALIZAR
+
 def swap_from_primary_to_secondary(page_id):
     global pages
     global page_location_map
@@ -64,7 +64,6 @@ def swap_from_primary_to_secondary(page_id):
     page_location_map[page_id] = Page_Location.SECONDARY.value
 
 
-# FALTA ACTUALIZAR
 def swap_from_secondary_to_primary(page_id):
     global pages
     global page_location_map
@@ -72,7 +71,6 @@ def swap_from_secondary_to_primary(page_id):
     pages[page_id] = get_page_data(page_id)
     file_manager.delete_file("pages/" + page_id + ".page404")
     page_location_map[page_id] = Page_Location.PRIMARY.value
-
 
 
 def write_primary(page_id, data, size):
@@ -90,9 +88,9 @@ def get_page_data(page_id):
     global page_location_map
 
     if(page_location_map[page_id] == Page_Location.PRIMARY.value):
-        return pages[page_id]
+        return pages[page_id].content
     else:
-        return file_manager.get_file_data("pages/" + page_id + ".page404")
+        return file_manager.get_object("pages/" + page_id + ".page404").content
 
 
 def get_pages(page_id_list):
@@ -109,4 +107,3 @@ class PageInfo():
     def __init__(self, *args, **kwargs):
         self.current_size = 0
         self.content = []
-

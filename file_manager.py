@@ -1,5 +1,6 @@
 import data_detector
 import os
+import pickle
 
 def save_data(date, team_id, sensor_id, sensor_type, data_packet):
 
@@ -16,23 +17,23 @@ def save_data(date, team_id, sensor_id, sensor_type, data_packet):
         print("team_id no reconocido: " + team_id )
 
 
-def save_new_file(path, name, data):
+def save_object(path, name, data):
 
     if(os.path.exists(path) == False):
         os.makedirs(path)
 
     # x = if the file exists, truncate and write.
-    file = open(path + name, "w")
-    file.write(data)
+    file = open(path + name, "wb")
+    pickle.dump(data, file, pickle.HIGHEST_PROTOCOL)
     file.close()
 
 def delete_file(path):
     os.remove(path) 
     
 
-def get_file_data(path):
-    file = open(path, "r")
-    data = file.read()
+def get_object(path):
+    file = open(path, "rb")
+    data = pickle.load(file)
     file.close()
 
     return data
