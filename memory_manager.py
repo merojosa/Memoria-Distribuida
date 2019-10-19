@@ -9,23 +9,23 @@ pages = {}
 FLOAT_SIZE = 4
 PAGE_SIZE = 12
 
-# When a page is created, it's located in primary memory. Return the new page number.
+# When a page is created, it's located in primary memory. Return the new page id.
 def create_page():
     global count_page
     global page_location_map
 
-    page_number = new_page_number()
-    page_location_map[page_number] = Page_Location.PRIMARY.value
-    pages[page_number] = PageInfo()
-    return page_number
+    page_id = new_page_id()
+    page_location_map[page_id] = Page_Location.PRIMARY.value
+    pages[page_id] = PageInfo()
+    return page_id
 
 
-def new_page_number():
+def new_page_id():
     global count_page
 
-    number = hex(count_page)
+    id = hex(count_page)
     count_page += 1
-    return number
+    return id
 
 
 def write(page_id, data_interface):
@@ -71,6 +71,7 @@ def swap_from_secondary_to_primary(page_id):
     pages[page_id] = get_page_data(page_id)
     file_manager.delete_file("pages/" + page_id + ".page404")
     page_location_map[page_id] = Page_Location.PRIMARY.value
+
 
 
 def write_primary(page_id, data, size):
