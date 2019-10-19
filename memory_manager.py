@@ -1,11 +1,13 @@
 from page_location import *
 import file_manager
+import re
 
 page_location_map = {}
 count_page = 0
 pages = {}
 
-PAGE_SIZE = 10
+FLOAT_SIZE = 4
+PAGE_SIZE = 12
 
 # When a page is created, it's located in primary memory. Return the new page number.
 def create_page():
@@ -14,7 +16,7 @@ def create_page():
 
     page_number = new_page_number()
     page_location_map[page_number] = Page_Location.PRIMARY.value
-    pages[page_number] = ""
+    pages[page_number] = PageInfo()
     return page_number
 
 
@@ -26,35 +28,33 @@ def new_page_number():
     return number
 
 
-def write(page_id, offset, data):
+def write(page_id, data_interface):
     global pages
     global page_location_map
 
-    new_data = ""
+    # Iterate every word with the format %ONE_LETTER{NUMBERS OR LETTERS}.
+    # Omits if there are spaces between ONE_LETTER and {NUMBERS OR LETTERS}
+    for expression in re.findall(r"%\w{[\w0-9\.]+}", data_interface):
+        data_type = expression[1]
+        single_data = expression[3:len(expression) - 1]
 
-    old_data = get_page_data(page_id)
-
-    # Append data acording offset.
-    if(offset > len(old_data)):
-        # Fill with spaces when the offset is bigger than the length
-        difference = offset - len(old_data)
-        new_data = old_data[:len(old_data)] + (' ' * difference) + data
-    else:
-        # If it needs to overwrite, go ahead.
-        new_data = old_data[:offset] + data + old_data[offset + len(data):]
-
-    if(page_location_map[page_id] == Page_Location.PRIMARY.value):
-        write_primary(page_id, new_data)
-    else:
-        swap_from_secondary_to_primary(page_id)
-        write_primary(page_id, new_data)
+        if(data_type == 'f' or data_type == 'i'):
+            single_data_size = FLOAT_SIZE
+        else:
+            raise Exception('Tipo de dato desconocido: ' + data_type)
+            
+        if(page_location_map[page_id] == Page_Location.PRIMARY.value):
+                write_primary(page_id, single_data, single_data_size)
+        else:
+            swap_from_secondary_to_primary(page_id)
+            write_primary(page_id, single_data, single_data_size)
 
 def save_page(page_id):
     global pages
     file_manager.save_new_file("pages/", page_id + ".page404", pages[page_id])
     pass
 
-
+# FALTA ACTUALIZAR
 def swap_from_primary_to_secondary(page_id):
     global pages
     global page_location_map
@@ -64,6 +64,7 @@ def swap_from_primary_to_secondary(page_id):
     page_location_map[page_id] = Page_Location.SECONDARY.value
 
 
+# FALTA ACTUALIZAR
 def swap_from_secondary_to_primary(page_id):
     global pages
     global page_location_map
@@ -73,16 +74,14 @@ def swap_from_secondary_to_primary(page_id):
     page_location_map[page_id] = Page_Location.PRIMARY.value
 
 
-def get_page_size(page_id):
-    return len(pages[page_id])
 
-
-def write_primary(page_id, data):
+def write_primary(page_id, data, size):
     global pages
 
-    pages[page_id] = data
+    pages[page_id].content.append(data)
+    pages[page_id].current_size += size
 
-    if(get_page_size(page_id) >=  PAGE_SIZE):
+    if(pages[page_id].current_size >=  PAGE_SIZE):
         swap_from_primary_to_secondary(page_id)
 
 
@@ -104,3 +103,10 @@ def get_pages(page_id_list):
         page_content_list.append(get_page_data(id))
 
     return page_content_list
+
+
+class PageInfo():
+    def __init__(self, *args, **kwargs):
+        self.current_size = 0
+        self.content = []
+
