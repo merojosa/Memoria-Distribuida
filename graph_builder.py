@@ -1,8 +1,6 @@
 # sudo apt install python3-pip
 # python3 -m pip install matplotlib
-# python3 -m pip install numpy
 
-import numpy as np
 import matplotlib.pyplot as plt
 
 # Pruebas, borrar despues
@@ -12,8 +10,6 @@ import struct
 ####
 
 # Pruebas, borrar despues
-
-
 def lista_generica():
     x = 2
     lista = []

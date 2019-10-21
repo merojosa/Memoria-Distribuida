@@ -4,96 +4,97 @@ import graph_builder
 
 
 def menu():
-    os.system('clear')
+    while True:
+        os.system('clear')
 
-    # Solicitamos todos los datos disponibles de los equipos
-    # lista_equipos = interfaz.get_equipos()
+        # Solicitamos todos los datos disponibles de los equipos
+        # lista_equipos = interfaz.get_equipos()
 
-    # Eliminar esto una vez que se conecte con la interfaz
-    lista_equipos = [1, 2, 3, 4, 5, 6]
-    ####
+        # Eliminar esto una vez que se conecte con la interfaz
+        lista_equipos = [1, 2, 3, 4, 5, 6]
+        ####
 
-    datos_sensores = lector_csv.a_lista('sensores.csv')
-    datos_menu = []
+        datos_sensores = lector_csv.a_lista('sensores.csv')
+        datos_menu = []
 
-    print("Equipo 404\n")
-    print("Graficador\n")
-    print("Lista de equipos con datos disponibles\n")
+        print("Equipo 404\n")
+        print("Graficador\n")
+        print("Lista de equipos con datos disponibles\n")
 
-    print("0 - Refrescar la lista de equipos")
+        if len(lista_equipos) == 0:
+            print("No hay datos de ningun equipo disponible")
 
-    if len(lista_equipos) == 0:
-        print("No hay datos de ningun equipo disponible")
+        for i in lista_equipos:
+            for j in range(1, len(datos_sensores)):
+                if str(i) == datos_sensores[j][0]:
+                    datos_menu.append(datos_sensores[j][2])
+                    break
 
-    for i in lista_equipos:
-        for j in range(1, len(datos_sensores)):
-            if str(i) == datos_sensores[j][0]:
-                datos_menu.append(datos_sensores[j][2])
-                break
+        for i in range(len(datos_menu)):
+            print(str(i + 1) + " - " + datos_menu[i])
 
-    for i in range(len(datos_menu)):
-        print(str(i + 1) + " - " + datos_menu[i])
+        print("\nPrecione cualquier otra tecla para refrescar la lista de equipos disponible")
 
-    opcion = input("\nSeleccione un numero >> ")
+        opcion = input("\nSeleccione una opcion >> ")
 
-    try:
-        opcion = int(opcion)
-    except ValueError:
-        menu()
-
-    try:
-        lista_equipos.index(opcion)
-    except ValueError:
-        menu()
-
-    sub_menu_sensores(opcion, datos_sensores)
-    menu()
+        try:
+            opcion = int(opcion)
+            if opcion != 0:
+                lista_equipos.index(opcion)
+                sub_menu_sensores(opcion, datos_sensores)
+        except ValueError:
+            continue
 
 
 def sub_menu_sensores(equipo, datos_sensores):
-    os.system('clear')
+    while True:
+        os.system('clear')
 
-    # Solicitamos todos los datos disponibles de los sensores
-    # lista_sensores = interfaz.get_sensores(equipo)
+        # Solicitamos todos los datos disponibles de los sensores
+        # lista_sensores = interfaz.get_sensores(equipo)
 
-    # Eliminar esto una vez que se conecte con la interfaz
-    lista_sensores = [1, 6, 8]
-    ####
+        # Eliminar esto una vez que se conecte con la interfaz
+        lista_sensores = [1, 6, 8]
+        lista_tipos = []
+        ####
 
-    datos_menu = []
+        datos_menu = []
 
-    print("Equipo 404\n")
-    print("Graficador\n")
-    print("Lista de sensores disponibles\n")
+        print("Equipo 404\n")
+        print("Graficador\n")
+        print("Lista de sensores disponibles\n")
 
-    for i in lista_sensores:
-        for j in range(1, len(datos_sensores)):
-            dato = str(datos_sensores[j][4])
-            if dato != '':
-                numero = int(dato, 16)
-                if i == numero:
-                    datos_menu.append(datos_sensores[j][5])
-                    break
+        for i in lista_sensores:
+            for j in range(1, len(datos_sensores)):
+                dato = str(datos_sensores[j][4])
+                if dato != '':
+                    numero = int(dato, 16)
+                    if i == numero:
+                        datos_menu.append(datos_sensores[j][5])
+                        lista_tipos.append(datos_sensores[j][6])
+                        break
 
-    for i in range(len(datos_menu)):
-        print(str(lista_sensores[i]) + " - " + datos_menu[i])
+        for i in range(len(datos_menu)):
+            print(str(lista_sensores[i]) + " - " + datos_menu[i])
+        
+        print("\nPrecione cualquier otra tecla para refrescar la lista de equipos disponible")
 
-    opcion = input("\nSeleccione un numero >> ")
+        opcion = input("\nSeleccione una opcion >> ")
 
-    try:
-        opcion = int(opcion)
-        lista_sensores.index(opcion)
+        try:
+            opcion = int(opcion)
+            tipos_index = lista_sensores.index(opcion)
 
-        # Pedimos los datos del sensor a la interfaz
-        # lista_datos = interfaz.get_datos(equipo, opcion)
+            # Pedimos los datos del sensor a la interfaz
+            # lista_datos = interfaz.get_datos(equipo, opcion)
 
-        # Mandamos a dividir e imprimir los datos
-        # eje_x, eje_y = graph_builder.procesar_datos(lista_datos)
-        # graph_builder.imprimir_grafico(eje_x, eje_x)
+            # Mandamos a dividir e imprimir los datos
+            # eje_x, eje_y = graph_builder.procesar_datos(lista_datos, lista_tipos[tipos_index])
+            # graph_builder.imprimir_grafico(eje_x, eje_x)
 
-    except ValueError:
-        sub_menu_sensores(equipo, datos_sensores)
-
+            break
+        except ValueError:
+            continue
     return
 
 

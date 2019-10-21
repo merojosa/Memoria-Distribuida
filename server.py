@@ -34,21 +34,25 @@ def process_packet(sock, waiting_queue_packets, processed_queue_packets):
         data = struct.unpack(packet_builder.FORMAT, packet)
 
         # Eliminar esto una vez que se conecte con la interfaz
-        date = str(datetime.datetime.fromtimestamp(data[1]))
-        team_id = int(data[2])
-        sensor_id = str(int.from_bytes(data[3], "big"))
-        sensor_type = str(data[4])
-        data_packet = str(data[5])
+        # date = str(datetime.datetime.fromtimestamp(data[1]))
+        # team_id = int(data[2])
+        # sensor_id = str(int.from_bytes(data[3], "big"))
+        # sensor_type = str(data[4])
+        # data_packet = str(data[5])
         ####
+
+        date = data[1]
+        team_id = data[2]
+        sensor_type = data[4]
+        data_packet = data[5]
 
         if sequence_list[sequence_index] != data[0] and 0 != data[4]:
 
             # Comunicación entre el servidor y la interfaz
-            # packet = struct.pack(data[1], data[2], data[3], data[4], data[5])
-            # interfaz.enviar(packet)
+            # interfaz.save_data(sensor_type, team_id, date, data_packet)
 
             # Eliminar esto una vez que se conecte con la interfaz
-            file_manager.save_data(date, team_id, sensor_id, sensor_type, data_packet)
+            # file_manager.save_data(date, team_id, sensor_id, sensor_type, data_packet)
             ####
 
             sequence_list[sequence_index] = data[0]
