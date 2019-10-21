@@ -37,29 +37,29 @@ def write(sensor_id, team_id, data: str):
 
 def read(sensor_id, team_id):
     page_list = process_table[(sensor_id,team_id)].page_list
-    return memory_manager.get_pages(page_list)
-
-
+    return interpret_data(sensor_id, team_id, memory_manager.get_pages(page_list))
+    
 #Work in progress, needs case when is picking empty space
 def interpret_data(sensor_id, team_id, page_data_list):
     data_list = []
     isInteger = True
     for page in page_data_list:
-        sensor_data = ""
-        data_iter = 0
+        #sensor_data = ""
+        #data_iter = 0
         for data in page:
-            sensor_data += data
-            if data_iter >= process_table[(sensor_id,team_id)].data_size:
+            sensor_data = data
+            #if data_iter >= process_table[(sensor_id,team_id)].data_size:
 
-                if(isInteger):
-                    stringToAppend = '%i' + sensor_data
-                else:
-                    stringToAppend = '%f' + sensor_data
+            if(isInteger):
+                stringToAppend = '%i' + sensor_data
+                isInteger = False
+            else:
+                stringToAppend = '%f' + sensor_data
+                isInteger = True
 
-                isInteger = not isinteger
-                data_list.append(sensor_data)
-                sensor_data = ""
-                data_iter = 0
+            data_list.append(stringToAppend)
+                #sensor_data = ""
+                #data_iter = 0
 
     return data_list
   
@@ -69,13 +69,26 @@ class ProcessInfo():
         self.last_page = None
         self.last_byte = 0
         self.page_list = []
-        self.data_size = 0
+        self.data_size = 8
 
 sensor = 1
 team = 1
 date = 4254
 data = 1424
+date1 = 42543
+data1 = 14243
+date2 = 42544
+data2 = 14244
+date3 = 42545
+data3 = 14245
+date4 = 42546
+data4 = 14246
 #pList = [[123],[12],[311],[123]]
 save_data(sensor,team, date,data)
+save_data(sensor,team, date1,data1)
+save_data(sensor,team, date2,data2)
+save_data(sensor,team, date3,data3)
+save_data(sensor,team, date4,data4)
 #interpret_data(sensor, team, pList)
-print(memory_manager.get_pages([process_table[(sensor,team)].last_page]))
+print(read(sensor, team))
+
