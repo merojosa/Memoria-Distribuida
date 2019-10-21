@@ -18,24 +18,40 @@ def receive_packet(sock, waiting_queue_packets):
 
 def process_packet(sock, waiting_queue_packets, processed_queue_packets):
 
-    last_sequence = -1
+    addr_list = []
+    sequence_list = []
 
     while True:
         packet, addr = waiting_queue_packets.get()
 
+        try:
+            sequence_index = addr_list.index(addr)
+        except ValueError:
+            addr_list.append(addr)
+            sequence_list.append(-1)
+            sequence_index = len(sequence_list) - 1
+
         data = struct.unpack(packet_builder.FORMAT, packet)
+
+        # Eliminar esto una vez que se conecte con la interfaz
         date = str(datetime.datetime.fromtimestamp(data[1]))
         team_id = int(data[2])
         sensor_id = str(int.from_bytes(data[3], "big"))
         sensor_type = str(data[4])
         data_packet = str(data[5])
+        ####
 
-        if last_sequence != data[0]:
+        if sequence_list[sequence_index] != data[0] and 0 != data[4]:
+
+            # Comunicación entre el servidor y la interfaz
+            # packet = struct.pack(data[1], data[2], data[3], data[4], data[5])
+            # interfaz.enviar(packet)
+
+            # Eliminar esto una vez que se conecte con la interfaz
             file_manager.save_data(date, team_id, sensor_id, sensor_type, data_packet)
-            last_sequence = data[0]
-            print("Paquete almacenado")
-        else:
-            print("Paquete descartado")
+            ####
+
+            sequence_list[sequence_index] = data[0]
 
         processed_queue_packets.put((packet, addr))
 
@@ -52,7 +68,7 @@ def send_ACK(sock, processed_queue_packets):
 
 
 def main():
-    UDP_IP = "10.1.138.56"
+    UDP_IP = "127.0.0.1"
     UDP_PORT = 5000
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
