@@ -8,7 +8,8 @@ import threading
 import ack_builder
 import file_manager
 import packet_builder
-
+import interface
+from enum_sensor_type import *
 
 def receive_packet(sock, waiting_queue_packets):
     while True:
@@ -46,10 +47,9 @@ def process_packet(sock, waiting_queue_packets, processed_queue_packets):
         sensor_type = data[4]
         data_packet = data[5]
 
-        if sequence_list[sequence_index] != data[0] and 0 != data[4]:
+        if sequence_list[sequence_index] != data[0] and Sensor_Type.KEEP_ALIVE.value != data[4]:
 
-            # Comunicación entre el servidor y la interfaz
-            # interfaz.save_data(sensor_type, team_id, date, data_packet)
+            interface.save_data(sensor_type, team_id, date, data_packet)
 
             # Eliminar esto una vez que se conecte con la interfaz
             # file_manager.save_data(date, team_id, sensor_id, sensor_type, data_packet)

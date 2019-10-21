@@ -1,6 +1,5 @@
 # sudo apt install python3-pip
 # python3 -m pip install matplotlib
-
 import matplotlib.pyplot as plt
 
 # Pruebas, borrar despues
@@ -28,18 +27,25 @@ def lista_generica():
     return lista
 ####
 
+"""
+def procesar_datos(lista_datos, tipo_dato):
+    if tipo_dato == "Booleano":
+        hora_inicial = sumar_horas([lista_datos[0][0][11:], '00:01:00'])
 
-def procesar_datos(lista_datos):
+        
+        continue
+    else:
+        continue
+
     print(lista_datos[0][0][11:])
     if lista_datos[0][0] < lista_datos[1][0]:
         print("Se vale comparar")
     if '2019-10-21 00:00:01' < '2019-10-22 00:00:00':
         print("Definitivamente se vale comparar")
     return 0, 0
-
+"""
 
 def sumar_horas(lista_horas):
-    #lista_horas = ['00:10:00', '00:00:59', '23:59:59']
     total = 0
     for hora in lista_horas:
         h, m, s = map(int, hora.split(":"))
@@ -55,12 +61,15 @@ def imprimir_grafico(eje_x, eje_y, label_y, label_x, titulo):
     plt.show()
     return
 
-# x = [5, 2, 1, 4, 7]
-# y = ["A", "B", "C", "D", "E"]
+x = [5, 2, 1, 4, 7, 5, 2, 1, 4, 7]
+y = ["2019-10-21\n00:00:00\n\n2019-10-21\n00:01:00", "2019-10-21\n00:01:01\n\n2019-10-21\n00:02:00", "2019-10-21\n00:02:01\n\n2019-10-21\n00:03:00", "2019-10-21\n00:03:01\n\n2019-10-21\n00:04:00", "2019-10-21\n00:04:01\n\n2019-10-21\n00:05:00", "2019-10-21\n00:00:00\n\n2019-10-21\n00:01:00", "2019-10-21\n00:01:01\n\n2019-10-21\n00:02:00", "2019-10-21\n00:02:01\n\n2019-10-21\n00:03:00", "2019-10-21\n00:03:01\n\n2019-10-21\n00:04:00", "2019-10-21\n00:04:01\n\n2019-10-21\n00:05:00"]
 
 # x = [5, 2, 1, 4, 7]
 # y = [12, 3, 5, 7, 9]
 
 
-lista = lista_generica()
-procesar_datos(lista)
+#lista = lista_generica()
+#procesar_datos(lista)
+#imprimir_grafico(y,x,"Y","X","Titulo")
+lista_horas = ['00:59:00', '00:01:00']
+#sumar_horas(lista_horas)

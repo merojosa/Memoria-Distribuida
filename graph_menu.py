@@ -1,17 +1,14 @@
 import os
 import lector_csv
 import graph_builder
-
+import interface
 
 def menu():
     while True:
         os.system('clear')
 
-        # Solicitamos todos los datos disponibles de los equipos
-        # lista_equipos = interfaz.get_equipos()
-
         # Eliminar esto una vez que se conecte con la interfaz
-        lista_equipos = [1, 2, 3, 4, 5, 6]
+        lista_equipos = [5, 6]
         ####
 
         datos_sensores = lector_csv.a_lista('sensores.csv')
@@ -31,7 +28,7 @@ def menu():
                     break
 
         for i in range(len(datos_menu)):
-            print(str(i + 1) + " - " + datos_menu[i])
+            print(str(lista_equipos[i]) + " - " + datos_menu[i])
 
         print("\nPrecione cualquier otra tecla para refrescar la lista de equipos disponible")
 
@@ -49,9 +46,6 @@ def menu():
 def sub_menu_sensores(equipo, datos_sensores):
     while True:
         os.system('clear')
-
-        # Solicitamos todos los datos disponibles de los sensores
-        # lista_sensores = interfaz.get_sensores(equipo)
 
         # Eliminar esto una vez que se conecte con la interfaz
         lista_sensores = [1, 6, 8]
@@ -86,7 +80,7 @@ def sub_menu_sensores(equipo, datos_sensores):
             tipos_index = lista_sensores.index(opcion)
 
             # Pedimos los datos del sensor a la interfaz
-            # lista_datos = interfaz.get_datos(equipo, opcion)
+            # lista_datos = interface.get_data(equipo, opcion)
 
             # Mandamos a dividir e imprimir los datos
             # eje_x, eje_y = graph_builder.procesar_datos(lista_datos, lista_tipos[tipos_index])
