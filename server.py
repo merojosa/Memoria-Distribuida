@@ -9,6 +9,7 @@ import ack_builder
 import file_manager
 import packet_builder
 import interface
+import graph_menu
 from enum_sensor_type import *
 
 def receive_packet(sock, waiting_queue_packets):
@@ -84,14 +85,17 @@ def main():
     receive_packet_process = threading.Thread(target=receive_packet, args=(sock, waiting_queue_packets,))
     process_packt_process = threading.Thread(target=process_packet, args=(sock, waiting_queue_packets, processed_queue_packets,))
     send_ACK_process = threading.Thread(target=send_ACK, args=(sock, processed_queue_packets,))
+    menu_process = threading.Thread(target=graph_menu.menu)
 
     receive_packet_process.start()
     process_packt_process.start()
     send_ACK_process.start()
+    menu_process.start()
 
     receive_packet_process.join()
     process_packt_process.join()
     send_ACK_process.join()
+    menu_process.join()
 
 
 main()
