@@ -2,7 +2,7 @@ import os
 import lector_csv
 import graph_builder
 import interface
-
+import time
 
 def menu():
     while True:
@@ -82,9 +82,12 @@ def sub_menu_tiempo(equipo, sensor, tipo, nombre_equipo, nombre_sensor):
             opcion = int(opcion)
             lista_opciones.index(opcion)
 
-            lista_datos = interface.get_data(equipo, sensor)
+            lista_datos = interface.read(int(equipo), int(sensor))
 
-            if opcion == 1:
+            if len(lista_datos) == 0:
+                print("\nNo hay datos disponibles de este sensor")
+                time.sleep(3)
+            elif opcion == 1:
                 eje_x, eje_y = graph_builder.procesar_datos_minuto(lista_datos, tipo)
             elif opcion == 2:
                 eje_x, eje_y = graph_builder.procesar_datos_hora(lista_datos, tipo)
@@ -98,5 +101,3 @@ def sub_menu_tiempo(equipo, sensor, tipo, nombre_equipo, nombre_sensor):
         except ValueError:
             continue
     return
-
-menu()
