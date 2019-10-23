@@ -4,6 +4,7 @@ import socket
 import struct
 import threading
 import time
+import random
 
 import ack_builder
 import file_manager
@@ -16,7 +17,11 @@ def create_motion_packet(queue_packets):
     while True:
 
         # Paquete de prueba
-        movement = 1.0
+        if(random.uniform(0, 1) > 0.5):
+            movement = 1.0
+        else:
+            movement = 0.0
+
         current_time = datetime.datetime.now()
         time.sleep(3)
         ####
@@ -30,9 +35,10 @@ def create_DHT11_packet(queue_packets):
     while True:
 
         # Paquete de prueba
-        temperature = 2.0
-        humidity = 3.0
+        temperature = random.uniform(27.0, 34.0)
+        humidity = random.uniform(20.0, 85.0)
         current_time = datetime.datetime.now()
+
         time.sleep(3)
         ####
 

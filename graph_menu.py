@@ -25,8 +25,6 @@ def menu():
         for i in range(len(datos_menu)):
             print(lista_equipos[i] + " - " + datos_menu[i])
 
-        print(lista_equipos)
-        print(datos_menu)
 
         opcion = input("\nSeleccione una opcion >> ")
 
