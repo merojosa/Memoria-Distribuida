@@ -82,7 +82,7 @@ def sub_menu_tiempo(equipo, sensor, tipo, nombre_equipo, nombre_sensor):
             opcion = int(opcion)
             lista_opciones.index(opcion)
 
-            lista_datos = interface.read(int(equipo), int(sensor))
+            lista_datos = interface.read(int(sensor), int(equipo))
 
             if len(lista_datos) == 0:
                 print("\nNo hay datos disponibles de este sensor")
