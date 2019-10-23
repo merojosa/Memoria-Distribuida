@@ -25,9 +25,6 @@ def menu():
         for i in range(len(datos_menu)):
             print(lista_equipos[i] + " - " + datos_menu[i])
 
-        print(lista_equipos)
-        print(datos_menu)
-
         opcion = input("\nSeleccione una opcion >> ")
 
         try:
@@ -94,10 +91,10 @@ def sub_menu_tiempo(equipo, sensor, tipo, nombre_equipo, nombre_sensor):
                 print("\nNo hay datos disponibles de este sensor")
                 time.sleep(3)
             else:
-                for x in range (len(lista_datos)):
+                for x in range(len(lista_datos)):
                     lista_datos[x][0] = str(datetime.datetime.fromtimestamp(int(lista_datos[x][0])))
                     lista_datos[x][1] = float(lista_datos[x][1])
-                
+
                 if opcion == 1:
                     eje_x, eje_y = graph_builder.procesar_datos_minuto(lista_datos, tipo)
                 elif opcion == 2:
