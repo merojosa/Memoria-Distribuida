@@ -35,8 +35,11 @@ def write(sensor_id, team_id, data: str):
 
 
 def read(sensor_id, team_id):
-    page_list = process_table[(sensor_id,team_id)].page_list
-    return interpret_data(sensor_id, team_id, memory_manager.get_pages(page_list))
+    if (sensor_id,team_id) in process_table.keys():
+        page_list = process_table[(sensor_id,team_id)].page_list
+        return interpret_data(sensor_id, team_id, memory_manager.get_pages(page_list))
+    else:
+        return []
     
 def interpret_data(sensor_id, team_id, page_data_list):
     data_list = []
