@@ -3,6 +3,8 @@ import lector_csv
 import graph_builder
 import interface
 import time
+import datetime
+
 
 def menu():
     while True:
@@ -23,11 +25,14 @@ def menu():
         for i in range(len(datos_menu)):
             print(lista_equipos[i] + " - " + datos_menu[i])
 
+        print(lista_equipos)
+        print(datos_menu)
+
         opcion = input("\nSeleccione una opcion >> ")
 
         try:
-            lista_equipos.index(opcion)
-            sub_menu_sensores(opcion, datos_sensores, lista_equipos[int(opcion)])
+            indice = lista_equipos.index(opcion)
+            sub_menu_sensores(opcion, datos_sensores, datos_menu[indice])
         except ValueError:
             continue
 
@@ -57,11 +62,12 @@ def sub_menu_sensores(equipo, datos_sensores, nombre_equipo):
         try:
             opcion = int(opcion)
             tipos_index = lista_sensores.index(opcion)
-            sub_menu_tiempo(equipo, opcion, lista_tipos[tipos_index], nombre_equipo, lista_sensores[tipos_index])
+            sub_menu_tiempo(equipo, opcion, lista_tipos[tipos_index], nombre_equipo, datos_menu[tipos_index])
             break
         except ValueError:
             continue
     return
+
 
 def sub_menu_tiempo(equipo, sensor, tipo, nombre_equipo, nombre_sensor):
     while True:
@@ -87,15 +93,20 @@ def sub_menu_tiempo(equipo, sensor, tipo, nombre_equipo, nombre_sensor):
             if len(lista_datos) == 0:
                 print("\nNo hay datos disponibles de este sensor")
                 time.sleep(3)
-            elif opcion == 1:
-                eje_x, eje_y = graph_builder.procesar_datos_minuto(lista_datos, tipo)
-            elif opcion == 2:
-                eje_x, eje_y = graph_builder.procesar_datos_hora(lista_datos, tipo)
             else:
-                eje_x, eje_y = graph_builder.procesar_datos_dia(lista_datos, tipo)
+                for x in range (len(lista_datos)):
+                    lista_datos[x][0] = str(datetime.datetime.fromtimestamp(int(lista_datos[x][0])))
+                    lista_datos[x][1] = float(lista_datos[x][1])
+                
+                if opcion == 1:
+                    eje_x, eje_y = graph_builder.procesar_datos_minuto(lista_datos, tipo)
+                elif opcion == 2:
+                    eje_x, eje_y = graph_builder.procesar_datos_hora(lista_datos, tipo)
+                elif opcion == 3:
+                    eje_x, eje_y = graph_builder.procesar_datos_dia(lista_datos, tipo)
 
-            titulo = "Equipo: " + nombre_equipo + "\n" + "Sensor: " + nombre_sensor
-            graph_builder.imprimir_grafico_lineas(eje_x, eje_y, "Datos del sensor", "Rango de fechas", titulo)
+                titulo = "Equipo: " + str(nombre_equipo) + "\n" + "Sensor: " + str(nombre_sensor)
+                graph_builder.imprimir_grafico_lineas(eje_x, eje_y, "Rango de fechas", "Datos del sensor", titulo)
 
             break
         except ValueError:
