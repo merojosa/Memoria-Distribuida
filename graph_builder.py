@@ -10,14 +10,14 @@ def procesar_datos_minuto(lista_datos, tipo_dato):
 
     fechas_procesadas.append(lista_datos[0][0])
     datos_procesados.append(0)
-        
-    while len(lista_datos) != 0: 
+
+    while len(lista_datos) != 0:
 
         contador = 0
-    
+
         hora_inicial = sumar_horas([lista_datos[0][0][11:], '00:01:00'], False)
         fecha_inicial = lista_datos[0][0][:10]
-        
+
         if hora_inicial > '23:59:59':
             hora_inicial = sumar_horas([lista_datos[0][0][11:], '00:01:00'], True)
             fecha_inicial = sumar_fecha(lista_datos[0][0][:10], 1)
@@ -52,14 +52,14 @@ def procesar_datos_hora(lista_datos, tipo_dato):
 
     fechas_procesadas.append(lista_datos[0][0])
     datos_procesados.append(0)
-        
-    while len(lista_datos) != 0: 
+
+    while len(lista_datos) != 0:
 
         contador = 0
-    
+
         hora_inicial = sumar_horas([lista_datos[0][0][11:], '01:00:00'], False)
         fecha_inicial = lista_datos[0][0][:10]
-        
+
         if hora_inicial > '23:59:59':
             hora_inicial = sumar_horas([lista_datos[0][0][11:], '01:00:00'], True)
             fecha_inicial = sumar_fecha(lista_datos[0][0][:10], 1)
@@ -94,14 +94,14 @@ def procesar_datos_dia(lista_datos, tipo_dato):
 
     fechas_procesadas.append(lista_datos[0][0])
     datos_procesados.append(0)
-        
-    while len(lista_datos) != 0: 
+
+    while len(lista_datos) != 0:
 
         contador = 0
-    
+
         hora_inicial = lista_datos[0][0][11:]
         fecha_inicial = sumar_fecha(lista_datos[0][0][:10], 1)
-        
+
         fecha = fecha_inicial + ' ' + hora_inicial
 
         fechas_procesadas.append(fecha)
@@ -141,6 +141,7 @@ def sumar_horas(lista_horas, modular):
         return("%02d:%02d:%02d" % (total / 3600, total / 60 % 60, total % 60))
     else:
         return("%02d:%02d:%02d" % (total / 3600 % 24, total / 60 % 60, total % 60))
+
 
 def imprimir_grafico_barras(eje_x, eje_y, label_x, label_y, titulo):
     plt.bar(eje_x, eje_y)

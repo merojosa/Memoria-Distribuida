@@ -12,6 +12,7 @@ import interface
 import graph_menu
 from enum_sensor_type import *
 
+
 def receive_packet(sock, waiting_queue_packets):
     while True:
         packet, addr = sock.recvfrom(1024)
