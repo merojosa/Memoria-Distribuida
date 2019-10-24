@@ -68,8 +68,8 @@ def send_packet(sock, SERVER_IP, SERVER_PORT, queue_packets):
 def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    SERVER_IP = "10.1.137.79"
-    SERVER_PORT = 10000
+    SERVER_IP = "127.0.0.1"
+    SERVER_PORT = 5000
 
     queue_packets = queue.Queue()
 

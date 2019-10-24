@@ -4,39 +4,46 @@ import socket
 import struct
 import threading
 import time
+import random
 
 import ack_builder
 import file_manager
 import packet_builder
 from enum_sensor_type import *
 
+
 def create_motion_packet(queue_packets):
 
-    timeout = 1.0
-
     while True:
-        time.sleep(1.0)
 
-        movement = 1.0
+        # Paquete de prueba
+        if(random.uniform(0, 1) > 0.5):
+            movement = 1.0
+        else:
+            movement = 0.0
+
         current_time = datetime.datetime.now()
+        time.sleep(3)
+        ####
+
         packetMov = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x01',  sensor_type=Sensor_Type.MOVEMENT.value,  data=movement, current_date=current_time)
         queue_packets.put(packetMov)
 
+
 def create_DHT11_packet(queue_packets):
 
-    timeout = 5.0
-
     while True:
-        time.sleep(5.0)
-        temperature = 27.42
-        humidity = 60.5
 
+        # Paquete de prueba
+        temperature = random.uniform(27.0, 34.0)
+        humidity = random.uniform(20.0, 85.0)
         current_time = datetime.datetime.now()
 
+        time.sleep(3)
+        ####
 
         packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x08',  sensor_type=Sensor_Type.TEMPERATURE.value,  data=temperature, current_date=current_time)
         packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x06',  sensor_type=Sensor_Type.HUMIDITY.value,  data=humidity, current_date=current_time)
-
         queue_packets.put(packetTemp)
         queue_packets.put(packetHum)
 
@@ -71,13 +78,9 @@ def send_packet(sock, SERVER_IP, SERVER_PORT, queue_packets):
 
 
 def main():
-    UDP_IP = "10.1.138.56"
-    UDP_PORT = 6000
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((UDP_IP, UDP_PORT))
 
-    SERVER_IP = "10.1.138.56"
+    SERVER_IP = "127.0.0.1"
     SERVER_PORT = 5000
 
     queue_packets = queue.Queue()

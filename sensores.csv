@@ -1,0 +1,20 @@
+ID grupo (1 byte),IDs de sensores (3 bytes),Grupo,,Código de sensor (1 byte),Tipo de sensor,Tipo de dato,Ejemplo de dato
+,,,,0x00,Keep Alive,N/A,N/A
+1,1,Whitenoise,,0x01,Movimiento,Booleano,0x01
+1,2,Whitenoise,,0x02,Sonido (Big Sound),Booleano,0x01
+,,,,,,,
+2,1,FlamingoBlack,,0x01,Movimiento,Booleano,0x01
+2,2,FlamingoBlack,,0x03,Luz (Fotoresistor),Booleano,0x01
+,,,,,,,
+3,1,GISSO,,0x01,Movimiento,Booleano,0x01
+3,2,GISSO,,0x04,Shock,Booleano,0x01
+,,,,,,,
+4,1,KOF,,0x01,Movimiento,Booleano,0x01
+4,2,KOF,,0x05,Touch,Booleano,0x01
+,,,,,,,
+5,1,Equipo 404,,0x01,Movimiento,Booleano,0x01
+5,2,Equipo 404,,0x06,Humedad,Float,40.21
+5,2,Equipo 404,,0x08,Temperatura,Float,27.05
+,,,,,,,
+6,1,Poffis,,0x09,Ultrasónico,Entero,500
+6,2,Poffis,,0x07,Big sound,Entero,1050
