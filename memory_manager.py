@@ -1,4 +1,5 @@
 from page_location import *
+from datetime import *
 import file_manager
 import re
 
@@ -16,6 +17,13 @@ def create_page():
 
     page_id = new_page_id()
     page_location_map[page_id] = Page_Location.PRIMARY.value
+
+    # Convert hex string to int
+    if(int(page_id, 16) > 4):
+        # Elimino la pagina mas vieja de pages y la guardo en un nodo.
+        pass        
+
+    # La nueva pagina si o si se guarda en pages.
     pages[page_id] = PageInfo()
     return page_id
 
@@ -104,7 +112,21 @@ def get_pages(page_id_list):
     return page_content_list
 
 
+def get_oldest_page():
+
+    oldest_date = pages['0x0'].date_modification
+    old_id = '0x0'
+
+    for id in pages:
+        if(pages[id].date_modification < oldest_date):
+            oldest_date = pages[id].date_modification
+            old_id = id
+
+    return old_id
+
+
 class PageInfo():
     def __init__(self, *args, **kwargs):
         self.current_size = 0
         self.content = []
+        self.date_modification = datetime.now()
