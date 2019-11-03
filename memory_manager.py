@@ -3,32 +3,35 @@ from datetime import *
 import file_manager
 import re
 
-page_location_map = {}
+import time
+
+
+page_location = {}
 count_page = 0
 pages = {}
 
 FLOAT_SIZE = 4
 PAGE_SIZE = 12
+MAX_PAGES = 4
 
 # When a page is created, it's located in primary memory. Return the new page id.
 def create_page():
     global count_page
-    global page_location_map
+    global page_location
 
-    page_id = new_page_id()
-    page_location_map[page_id] = Page_Location.PRIMARY.value
+    page_id = generate_page_id()
+    page_location[page_id] = Page_Location.PRIMARY.value
 
     # Convert hex string to int
-    if(int(page_id, 16) > 4):
-        # Elimino la pagina mas vieja de pages y la guardo en un nodo.
-        pass        
+    if(int(page_id, 16) + 1 > MAX_PAGES):
+        swap_old_page()
 
-    # La nueva pagina si o si se guarda en pages.
+    # The new page must be in primary memory.
     pages[page_id] = PageInfo()
     return page_id
 
 
-def new_page_id():
+def generate_page_id():
     global count_page
 
     id = hex(count_page)
@@ -38,7 +41,7 @@ def new_page_id():
 
 def write(page_id, data_interface):
     global pages
-    global page_location_map
+    global page_location
 
     # Iterate every word with the format %ONE_LETTER{NUMBERS OR LETTERS}.
     # Omits if there are spaces between ONE_LETTER and {NUMBERS OR LETTERS}
@@ -50,36 +53,31 @@ def write(page_id, data_interface):
             single_data_size = FLOAT_SIZE
         else:
             raise Exception('Tipo de dato desconocido: ' + data_type)
-            
-        if(page_location_map[page_id] == Page_Location.PRIMARY.value):
-                write_primary(page_id, single_data, single_data_size)
-        else:
+
+        if(page_location[page_id] == Page_Location.SECONDARY.value):
             swap_from_secondary_to_primary(page_id)
-            write_primary(page_id, single_data, single_data_size)
 
-def save_page(page_id):
-    global pages
-    file_manager.save_object("pages/", page_id + ".page404", pages[page_id])
-    pass
-
+        write_primary(page_id, single_data, single_data_size)
 
 def swap_from_primary_to_secondary(page_id):
     global pages
-    global page_location_map
+    global page_location
 
-    save_page(page_id)
+    # protocol.save_page
     del pages[page_id]
-    page_location_map[page_id] = Page_Location.SECONDARY.value
+    page_location[page_id] = Page_Location.SECONDARY.value
 
 
+# The old page goes to secondary to get 4 pages max.
 def swap_from_secondary_to_primary(page_id):
     global pages
-    global page_location_map
+    global page_location
+
+    swap_old_page()
 
     pages[page_id] = get_page_data(page_id)
-    file_manager.delete_file("pages/" + page_id + ".page404")
-    page_location_map[page_id] = Page_Location.PRIMARY.value
-
+    # protocol.delete_page (?)
+    page_location[page_id] = Page_Location.PRIMARY.value
 
 
 def write_primary(page_id, data, size):
@@ -87,6 +85,7 @@ def write_primary(page_id, data, size):
 
     pages[page_id].content.append(data)
     pages[page_id].current_size += size
+    pages[page_id].date_modification = datetime.now()
 
     if(pages[page_id].current_size >=  PAGE_SIZE):
         swap_from_primary_to_secondary(page_id)
@@ -94,12 +93,12 @@ def write_primary(page_id, data, size):
 
 def get_page_data(page_id):
     global pages
-    global page_location_map
+    global page_location
 
-    if(page_location_map[page_id] == Page_Location.PRIMARY.value):
+    if(page_location[page_id] == Page_Location.PRIMARY.value):
         return pages[page_id].content
     else:
-        return file_manager.get_object("pages/" + page_id + ".page404").content
+        return None # protocol.get_page_data
 
 
 def get_pages(page_id_list):
@@ -112,17 +111,17 @@ def get_pages(page_id_list):
     return page_content_list
 
 
-def get_oldest_page():
-
-    oldest_date = pages['0x0'].date_modification
-    old_id = '0x0'
+def swap_old_page():
+    # start with the first id
+    old_id = next(iter(pages))
+    oldest_date = pages[old_id].date_modification
 
     for id in pages:
         if(pages[id].date_modification < oldest_date):
             oldest_date = pages[id].date_modification
             old_id = id
 
-    return old_id
+    swap_from_primary_to_secondary(old_id)
 
 
 class PageInfo():
