@@ -24,4 +24,3 @@ def create(team_id, sensor_id, sensor_type, data, current_date):
     last_sequence = new_sequence
 
     return struct.pack(FORMAT, new_sequence, timestamp, team_id, sensor_id, sensor_type, data)
-    pass
