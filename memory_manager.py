@@ -2,8 +2,8 @@ from page_location import *
 from datetime import *
 import file_manager
 import re
-
-import time
+import packet_builders.local_distributed_packet_builder as local_packet_builder
+import struct
 
 
 page_location = {}
@@ -13,6 +13,11 @@ pages = {}
 FLOAT_SIZE = 4
 PAGE_SIZE = 12
 MAX_PAGES = 4
+
+INTERFACE_PORT = 5000
+INTERFACE_IP = "10.1.137.66"
+
+OPERATION_CODE = 0
 
 # When a page is created, it's located in primary memory. Return the new page id.
 def create_page():
@@ -123,6 +128,19 @@ def swap_old_page():
 
     swap_from_primary_to_secondary(old_id)
 
+
+def save_page(page_id):
+
+    data_string = convert_list_to_string(pages[page_id].content).encode()
+    packet = local_packet_builder.create(operation_code=OPERATION_CODE, page_id=int(page_id, 16), data=data_string)
+
+    print(packet)
+
+
+
+
+def convert_list_to_string(list):
+    return ' '.join(list)
 
 class PageInfo():
     def __init__(self, *args, **kwargs):
