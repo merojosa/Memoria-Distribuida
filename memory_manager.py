@@ -4,6 +4,7 @@ import file_manager
 import re
 import packet_builders.local_distributed_packet_builder as local_packet_builder
 import struct
+import socket
 
 
 page_location = {}
@@ -134,13 +135,20 @@ def save_page(page_id):
     data_string = convert_list_to_string(pages[page_id].content).encode()
     packet = local_packet_builder.create(operation_code=OPERATION_CODE, page_id=int(page_id, 16), data=data_string)
 
-    print(packet)
+    socket_interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-
+    while True:
+        try:
+            socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
+            socket_interface.sendall(packet)
+            break
+        except socket.error:
+            continue
 
 
 def convert_list_to_string(list):
     return ' '.join(list)
+
 
 class PageInfo():
     def __init__(self, *args, **kwargs):
