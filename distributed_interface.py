@@ -9,6 +9,7 @@ page_location = {}
 current_size_nodes = {}
 
 
+# To a node
 def save_page_node(local_queue_packets, ip_node_queue):
 
     socket_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -21,12 +22,24 @@ def save_page_node(local_queue_packets, ip_node_queue):
         # send message with socket_node...
 
 
+# From a node
 def receive_packet_node(ip_node_queue):
     while True:
         ip_node = ip_node_queue.get()
         # receive size
     pass
 
+
+# To local memory
+def send_packet_local():
+	pass
+
+
+# To distributed interfaces
+def broadcast_interfaces(metadata_queue):
+	while True:
+	    metadata = metadata_queue.get()
+	pass
 
 def choose_node():
     biggest_size = -1
@@ -47,9 +60,11 @@ def main():
     
     local_queue_packets = queue.Queue()
     ip_node_queue = queue.Queue()
+    metadata_queue = queue.Queue()
 
     save_page_node_thread = threading.Thread(target=save_page_node, args=(local_queue_packets, ip_node_queue,))
     receive_size_node_thread = threading.Thread(target=receive_packet_node, args=(ip_node_queue,))
+    send_packet_local_thread = threading.Thread(target=send_packet_local, args=(ip_node_queue,))
 
     save_page_node_thread.start()
     receive_size_node_thread.start()
