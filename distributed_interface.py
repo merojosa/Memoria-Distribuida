@@ -2,6 +2,9 @@ import threading
 import queue
 import socket
 import time
+import struct
+import packet_builders.local_distributed_packet_builder as local_packet_builder
+from enum_operation_code import Operation_Code
 
 NODES_PORT = 6000
 
@@ -13,12 +16,11 @@ LOCAL_IP = '127.0.0.1'
 
 
 # To a node
-def save_page_node(local_queue_packets, ip_node_queue):
+def save_page_node(save_packet_queue, ip_node_queue):
 
     socket_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     while True:
-        packet = local_queue_packets.get()
-        # Pending process packet acording the protocol
+        page_id, data_size, data = save_packet_queue.get()
         node_ip = choose_node()
         ip_node_queue.put(node_ip)
 
@@ -49,6 +51,7 @@ def receive_local_packet(local_packet_queue):
             data = connection.recv(1024)
 
             if(data):
+                # To process_local_packet
                 local_packet_queue.put(data)
 
 
@@ -70,23 +73,29 @@ def choose_node():
 
     return big_ip
 
-def process_local_packet(local_packet_queue):
+def process_local_packet(local_packet_queue, save_packet_queue):
     while True:
         packet = local_packet_queue.get()
+        data_size = struct.unpack_from(local_packet_builder.INITIAL_FORMAT, packet)[2]
+        actual_format = local_packet_builder.get_format(data_size)
+        data_tuple = struct.unpack(actual_format, packet)
+
+        if(data_tuple[0] == Operation_Code.SAVE.value):
+            save_packet_queue.put( (data_tuple[1], data_tuple[2], data_tuple[3].decode()) )
 
 
 def main():
 
     current_size_nodes["127.0.0.1"] = 100
     
-    local_queue_packets = queue.Queue()
+    save_packet_queue = queue.Queue()
     ip_node_queue = queue.Queue()
     local_packet_queue = queue.Queue()
 
-    save_page_node_thread = threading.Thread(target=save_page_node, args=(local_queue_packets, ip_node_queue,))
+    save_page_node_thread = threading.Thread(target=save_page_node, args=(save_packet_queue, ip_node_queue,))
     receive_size_node_thread = threading.Thread(target=receive_packet_node, args=(ip_node_queue,))
     receive_local_packet_thread = threading.Thread(target=receive_local_packet, args=(local_packet_queue,))
-    process_local_packet_therad = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
+    process_local_packet_therad = threading.Thread(target=process_local_packet, args=(local_packet_queue,save_packet_queue,))
 
     save_page_node_thread.start()
     receive_size_node_thread.start()

@@ -6,6 +6,7 @@ import packet_builders.local_distributed_packet_builder as local_packet_builder
 import struct
 import socket
 import time
+from enum_operation_code import Operation_Code
 
 
 page_location = {}
@@ -18,8 +19,6 @@ MAX_PAGES = 4
 
 INTERFACE_PORT = 5000
 INTERFACE_IP = "127.0.0.1"
-
-OPERATION_CODE = 0
 
 # When a page is created, it's located in primary memory. Return the new page id.
 def create_page():
@@ -133,7 +132,7 @@ def swap_old_page():
 def save_page(page_id):
 
     data_string = convert_list_to_string(pages[page_id].content).encode()
-    packet = local_packet_builder.create(operation_code=OPERATION_CODE,page_id=int(page_id, 16), data=data_string)
+    packet = local_packet_builder.create(operation_code=Operation_Code.SAVE.value, page_id=int(page_id, 16), data=data_string)
     socket_interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     while True:
@@ -156,8 +155,3 @@ class PageInfo():
         self.current_size = 0
         self.content = []
         self.date_modification = datetime.now()
-
-id1 = create_page()
-write(id1, '%i{20}')
-write(id1, '%f{7.23}')
-save_page(id1)
