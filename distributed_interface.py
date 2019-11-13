@@ -3,10 +3,13 @@ import queue
 import socket
 import time
 
-NODES_PORT = 5000
+NODES_PORT = 6000
 
 page_location = {}
 current_size_nodes = {}
+
+LOCAL_PORT = 5000
+LOCAL_IP = '127.0.0.1'
 
 
 # To a node
@@ -34,6 +37,20 @@ def receive_packet_node(ip_node_queue):
 def send_packet_local():
 	pass
 
+# From local memory
+def receive_local_packet(local_packet_queue):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_local:
+
+        socket_local.bind((LOCAL_IP, LOCAL_PORT))
+        socket_local.listen()
+
+        while True:
+            connection, address = socket_local.accept()
+            data = connection.recv(1024)
+
+            if(data):
+                local_packet_queue.put(data)
+
 
 # To distributed interfaces
 def broadcast_interfaces(metadata_queue):
@@ -53,6 +70,10 @@ def choose_node():
 
     return big_ip
 
+def process_local_packet(local_packet_queue):
+    while True:
+        packet = local_packet_queue.get()
+
 
 def main():
 
@@ -60,16 +81,21 @@ def main():
     
     local_queue_packets = queue.Queue()
     ip_node_queue = queue.Queue()
-    metadata_queue = queue.Queue()
+    local_packet_queue = queue.Queue()
 
     save_page_node_thread = threading.Thread(target=save_page_node, args=(local_queue_packets, ip_node_queue,))
     receive_size_node_thread = threading.Thread(target=receive_packet_node, args=(ip_node_queue,))
-    send_packet_local_thread = threading.Thread(target=send_packet_local, args=(ip_node_queue,))
+    receive_local_packet_thread = threading.Thread(target=receive_local_packet, args=(local_packet_queue,))
+    process_local_packet_therad = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
 
     save_page_node_thread.start()
     receive_size_node_thread.start()
+    receive_local_packet_thread.start()
+    process_local_packet_therad.start()
 
     save_page_node_thread.join()
     receive_size_node_thread.join()
+    receive_local_packet_thread.join()
+    process_local_packet_therad.join()
 
 main()

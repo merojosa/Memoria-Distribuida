@@ -5,6 +5,7 @@ import re
 import packet_builders.local_distributed_packet_builder as local_packet_builder
 import struct
 import socket
+import time
 
 
 page_location = {}
@@ -16,7 +17,7 @@ PAGE_SIZE = 12
 MAX_PAGES = 4
 
 INTERFACE_PORT = 5000
-INTERFACE_IP = "10.1.137.66"
+INTERFACE_IP = "127.0.0.1"
 
 OPERATION_CODE = 0
 
@@ -82,7 +83,6 @@ def swap_from_secondary_to_primary(page_id):
     swap_old_page()
 
     pages[page_id] = get_page_data(page_id)
-    # protocol.delete_page (?)
     page_location[page_id] = Page_Location.PRIMARY.value
 
 
@@ -129,20 +129,21 @@ def swap_old_page():
 
     swap_from_primary_to_secondary(old_id)
 
-
+# To interface distributed
 def save_page(page_id):
 
     data_string = convert_list_to_string(pages[page_id].content).encode()
-    packet = local_packet_builder.create(operation_code=OPERATION_CODE, page_id=int(page_id, 16), data=data_string)
-
+    packet = local_packet_builder.create(operation_code=OPERATION_CODE,page_id=int(page_id, 16), data=data_string)
     socket_interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     while True:
         try:
             socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
             socket_interface.sendall(packet)
+            socket_interface.close()
             break
         except socket.error:
+            time.sleep(2)
             continue
 
 
@@ -155,3 +156,8 @@ class PageInfo():
         self.current_size = 0
         self.content = []
         self.date_modification = datetime.now()
+
+id1 = create_page()
+write(id1, '%i{20}')
+write(id1, '%f{7.23}')
+save_page(id1)
