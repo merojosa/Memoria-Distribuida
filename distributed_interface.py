@@ -12,7 +12,7 @@ page_location = {}
 current_size_nodes = {}
 
 LOCAL_PORT = 5000
-LOCAL_IP = '127.0.0.1'
+LOCAL_IP = '10.1.138.62'
 
 
 # To a node
@@ -36,18 +36,14 @@ def receive_packet_node(ip_node_queue):
 
 
 # To local memory
-def send_packet_local(packet):
-    print("enviando")
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((LOCAL_IP, LOCAL_PORT))
-        s.sendall(packet)
-        s.close()
+def send_packet_local(packet, connection):
+    connection.sendall(packet)
 
 # From local memory
 def receive_local_packet(local_packet_queue):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_local:
 
-        socket_local.bind((LOCAL_IP, LOCAL_PORT))
+        socket_local.bind(("10.1.139.25", LOCAL_PORT))
         socket_local.listen()
 
         while True:
@@ -57,7 +53,7 @@ def receive_local_packet(local_packet_queue):
             if(data):
                 # To process_local_packet
                 local_packet_queue.put(data)
-                send_packet_local(b"jeje")
+                send_packet_local(b"jeje", connection)
 
 
 # To distributed interfaces
