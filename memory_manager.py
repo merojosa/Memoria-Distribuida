@@ -18,8 +18,7 @@ PAGE_SIZE = 12
 MAX_PAGES = 4
 
 INTERFACE_PORT = 5000
-INTERFACE_IP = "127.0.0.1"
-
+INTERFACE_IP = "10.1.139.25"
 # When a page is created, it's located in primary memory. Return the new page id.
 def create_page():
     global count_page
@@ -139,7 +138,7 @@ def save_page(page_id):
         try:
             socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
             socket_interface.sendall(packet)
-            data = connection.recv(1024)
+            data = socket_interface.recv(1024)
             print("recibido")
             print(data)
             socket_interface.close()
