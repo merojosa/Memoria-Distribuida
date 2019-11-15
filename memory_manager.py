@@ -139,6 +139,9 @@ def save_page(page_id):
         try:
             socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
             socket_interface.sendall(packet)
+            data = connection.recv(1024)
+            print("recibido")
+            print(data)
             socket_interface.close()
             break
         except socket.error:
@@ -155,3 +158,11 @@ class PageInfo():
         self.current_size = 0
         self.content = []
         self.date_modification = datetime.now()
+
+
+
+
+id1 = create_page()
+write(id1, "%i{53}")
+
+save_page(id1)

@@ -36,8 +36,12 @@ def receive_packet_node(ip_node_queue):
 
 
 # To local memory
-def send_packet_local():
-	pass
+def send_packet_local(packet):
+    print("enviando")
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((LOCAL_IP, LOCAL_PORT))
+        s.sendall(packet)
+        s.close()
 
 # From local memory
 def receive_local_packet(local_packet_queue):
@@ -49,10 +53,11 @@ def receive_local_packet(local_packet_queue):
         while True:
             connection, address = socket_local.accept()
             data = connection.recv(1024)
-
+            print(data)
             if(data):
                 # To process_local_packet
                 local_packet_queue.put(data)
+                send_packet_local(b"jeje")
 
 
 # To distributed interfaces
@@ -64,7 +69,7 @@ def broadcast_interfaces(metadata_queue):
 def choose_node():
     biggest_size = -1
     big_ip = None
-    
+
     for node_id in current_size_nodes:
 
         if(current_size_nodes[node_id] > biggest_size):
@@ -87,7 +92,7 @@ def process_local_packet(local_packet_queue, save_packet_queue):
 def main():
 
     current_size_nodes["127.0.0.1"] = 100
-    
+
     save_packet_queue = queue.Queue()
     ip_node_queue = queue.Queue()
     local_packet_queue = queue.Queue()
