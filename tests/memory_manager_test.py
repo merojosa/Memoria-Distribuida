@@ -13,8 +13,7 @@ def send_packet_interface():
     memory_manager.write(id2, '%i{40}')
     memory_manager.write(id2, '%f{1.5}')
 
-    memory_manager.INTERFACE_IP = '127.0.0.1'
-    memory_manager.INTERFACE_PORT = 2000
+    memory_manager.INTERFACE_IP = '192.168.0.16'
 
     memory_manager.save_page(id2)
 

@@ -17,8 +17,8 @@ FLOAT_SIZE = 4
 PAGE_SIZE = 12
 MAX_PAGES = 4
 
-INTERFACE_PORT = 5000
-INTERFACE_IP = "10.1.139.25"
+INTERFACE_PORT = 2000
+INTERFACE_IP = '192.168.0.16'
 # When a page is created, it's located in primary memory. Return the new page id.
 def create_page():
     global count_page
@@ -131,7 +131,7 @@ def swap_old_page():
 def save_page(page_id):
 
     data_string = convert_list_to_string(pages[page_id].content).encode()
-    packet = local_packet_builder.create(operation_code=Operation_Code.SAVE.value, page_id=int(page_id, 16), data=data_string)
+    packet = local_packet_builder.create_packet_to_distributed_interface(operation_code=Operation_Code.SAVE.value, page_id=int(page_id, 16), data=data_string)
     socket_interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     while True:
@@ -139,7 +139,6 @@ def save_page(page_id):
             socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
             socket_interface.sendall(packet)
             data = socket_interface.recv(1024)
-            print("recibido")
             print(data)
             socket_interface.close()
             break
@@ -157,11 +156,3 @@ class PageInfo():
         self.current_size = 0
         self.content = []
         self.date_modification = datetime.now()
-
-
-
-
-id1 = create_page()
-write(id1, "%i{53}")
-
-save_page(id1)

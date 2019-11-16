@@ -11,8 +11,10 @@ NODES_PORT = 6000
 page_location = {}
 current_size_nodes = {}
 
-LOCAL_PORT = 5000
-LOCAL_IP = '10.1.138.62'
+LOCAL_PORT = 2000
+MY_IP = '192.168.0.16'
+
+connection_to_local = None
 
 
 # To a node
@@ -24,36 +26,47 @@ def save_page_node(save_packet_queue, ip_node_queue):
         node_ip = choose_node()
         ip_node_queue.put(node_ip)
 
-        # send message with socket_node...
-
+        # send message to node.
 
 # From a node
 def receive_packet_node(ip_node_queue):
     while True:
+        # No se si se necesita la ip del nodo?? @Josue
         ip_node = ip_node_queue.get()
-        # receive size
+
+        # Waiting for the answer of the node.
+
+        # Cuando se reciba la respuesta por parte del nodo, lo unico que se tiene que hacer
+        # es enviar un mensaje de confirmacion (send_packet_local) usando local_packet_builder
+        # para crear el paquete.
     pass
 
 
 # To local memory
-def send_packet_local(packet, connection):
-    connection.sendall(packet)
+# Note that before it sends a packet, it needs to have a connection_to_local, ie, receive a packet from local.
+def send_packet_local(packet):
+    global connection_to_local
+    print("Enviando...")
+    connection_to_local.sendall(packet)
 
 # From local memory
 def receive_local_packet(local_packet_queue):
+    global connection_to_local
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_local:
 
-        socket_local.bind(("10.1.139.25", LOCAL_PORT))
+        socket_local.bind((MY_IP, LOCAL_PORT))
         socket_local.listen()
 
         while True:
-            connection, address = socket_local.accept()
-            data = connection.recv(1024)
+            connection_to_local, address = socket_local.accept()
+
+            data = connection_to_local.recv(1024)
             print(data)
             if(data):
                 # To process_local_packet
                 local_packet_queue.put(data)
-                send_packet_local(b"jeje", connection)
+                send_packet_local(b"Paquete de prueba")
 
 
 # To distributed interfaces
@@ -77,8 +90,8 @@ def choose_node():
 def process_local_packet(local_packet_queue, save_packet_queue):
     while True:
         packet = local_packet_queue.get()
-        data_size = struct.unpack_from(local_packet_builder.INITIAL_FORMAT, packet)[2]
-        actual_format = local_packet_builder.get_format(data_size)
+        data_size = struct.unpack_from(local_packet_builder.INITIAL_FORMAT_INTERFACE, packet)[2]
+        actual_format = local_packet_builder.get_format(local_packet_builder.INITIAL_FORMAT_INTERFACE, data_size)
         data_tuple = struct.unpack(actual_format, packet)
 
         if(data_tuple[0] == Operation_Code.SAVE.value):
