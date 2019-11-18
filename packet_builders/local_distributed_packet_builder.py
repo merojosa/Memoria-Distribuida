@@ -2,7 +2,7 @@ import struct
 from enum_operation_code import Operation_Code
 
 # unsigned char (operation code), unsigned int (page id), unsigned int (page size), pending data
-INITIAL_FORMAT_INTERFACE = 'BII'
+INITIAL_FORMAT_INTERFACE = 'BBI'
 INITIAL_FORMAT_LOCAL = 'BB'
 
 def create_packet_to_distributed_interface(operation_code, page_id, data):
@@ -15,7 +15,7 @@ def create_packet_to_distributed_interface(operation_code, page_id, data):
 def create_packet_to_local(operation_code, page_id, data):
 
     # If it's LOAD, it needs to return the data page.
-    if(operation_code == Operation_Code.LOAD.value):
+    if(operation_code == Operation_Code.READ.value):
 
         data_size = len(data)
         packet_format = get_format(INITIAL_FORMAT_LOCAL, data_size)
