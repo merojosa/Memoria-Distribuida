@@ -42,8 +42,8 @@ def create_DHT11_packet(queue_packets):
         time.sleep(3)
         ####
 
-        packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x08',  sensor_type=Sensor_Type.TEMPERATURE.value,  data=temperature, current_date=current_time)
-        packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x06',  sensor_type=Sensor_Type.HUMIDITY.value,  data=humidity, current_date=current_time)
+        packetTemp = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x03',  sensor_type=Sensor_Type.TEMPERATURE.value,  data=temperature, current_date=current_time)
+        packetHum = packet_builder.create(team_id=5, sensor_id=b'\x00\x00\x02',  sensor_type=Sensor_Type.HUMIDITY.value,  data=humidity, current_date=current_time)
         queue_packets.put(packetTemp)
         queue_packets.put(packetHum)
 
