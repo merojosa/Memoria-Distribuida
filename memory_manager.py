@@ -150,6 +150,9 @@ def save_page(page_id):
 def convert_list_to_string(list):
     return ' '.join(list)
 
+def convert_string_to_list(string):
+    return string.split()
+
 
 class PageInfo():
     def __init__(self, *args, **kwargs):
