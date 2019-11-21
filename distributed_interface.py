@@ -8,8 +8,14 @@ from enum_operation_code import Operation_Code
 
 NODES_PORT = 6000
 
+# page id - node id
 page_location = {}
+
+# node id - size
 current_size_nodes = {}
+
+# node id - ip
+nodes_location = {}
 
 LOCAL_PORT = 2000
 MY_IP = '10.232.70.91'
