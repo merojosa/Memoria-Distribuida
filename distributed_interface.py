@@ -12,7 +12,7 @@ page_location = {}
 current_size_nodes = {}
 
 LOCAL_PORT = 2000
-MY_IP = '192.168.0.16'
+MY_IP = '10.232.70.91'
 
 connection_to_local = None
 
@@ -62,11 +62,10 @@ def receive_local_packet(local_packet_queue):
             connection_to_local, address = socket_local.accept()
 
             data = connection_to_local.recv(1024)
-            print(data)
             if(data):
                 # To process_local_packet
                 local_packet_queue.put(data)
-                send_packet_local(b"Paquete de prueba")
+                send_packet_local(local_packet_builder.create_packet_to_local(Operation_Code.OK.value, 1, None))
 
 
 # To distributed interfaces
@@ -93,6 +92,8 @@ def process_local_packet(local_packet_queue, save_packet_queue):
         data_size = struct.unpack_from(local_packet_builder.INITIAL_FORMAT_INTERFACE, packet)[2]
         actual_format = local_packet_builder.get_format(local_packet_builder.INITIAL_FORMAT_INTERFACE, data_size)
         data_tuple = struct.unpack(actual_format, packet)
+
+        print(data_tuple)
 
         if(data_tuple[0] == Operation_Code.SAVE.value):
             save_packet_queue.put( (data_tuple[1], data_tuple[2], data_tuple[3].decode()) )
