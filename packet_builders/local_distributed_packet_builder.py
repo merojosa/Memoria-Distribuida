@@ -3,14 +3,18 @@ from enum_operation_code import Operation_Code
 
 # unsigned char (operation code), unsigned int (page id), unsigned int (page size), pending data
 INITIAL_FORMAT_INTERFACE = 'BBI'
+READ_FORMAT_INTERFACE = 'BB'
 INITIAL_FORMAT_LOCAL = 'BB'
 
 def create_packet_to_distributed_interface(operation_code, page_id, data):
 
-    data_size = len(data)
-    packet_format = get_format(INITIAL_FORMAT_INTERFACE, data_size)
+    if(operation_code == Operation_Code.READ.value):
+        return struct.pack(READ_FORMAT_INTERFACE, operation_code, page_id)
+    else:        
+        data_size = len(data)
+        packet_format = get_format(INITIAL_FORMAT_INTERFACE, data_size)
 
-    return struct.pack(packet_format, operation_code, page_id, data_size, data)
+        return struct.pack(packet_format, operation_code, page_id, data_size, data)
 
 def create_packet_to_local(operation_code, page_id, data):
 

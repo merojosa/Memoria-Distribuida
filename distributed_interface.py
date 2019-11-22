@@ -18,7 +18,7 @@ current_size_nodes = {}
 nodes_location = {}
 
 LOCAL_PORT = 2000
-MY_IP = '10.232.70.91'
+MY_IP = '127.0.0.1'
 
 connection_to_local = None
 
@@ -70,8 +70,9 @@ def receive_local_packet(local_packet_queue):
             data = connection_to_local.recv(1024)
             if(data):
                 # To process_local_packet
-                local_packet_queue.put(data)
-                send_packet_local(local_packet_builder.create_packet_to_local(Operation_Code.OK.value, 1, None))
+                print(data)
+            #    local_packet_queue.put(data)
+            #    send_packet_local(local_packet_builder.create_packet_to_local(Operation_Code.OK.value, 1, None))
 
 
 # To distributed interfaces
@@ -106,9 +107,6 @@ def process_local_packet(local_packet_queue, save_packet_queue):
 
 
 def main():
-
-    current_size_nodes["127.0.0.1"] = 100
-
     save_packet_queue = queue.Queue()
     ip_node_queue = queue.Queue()
     local_packet_queue = queue.Queue()

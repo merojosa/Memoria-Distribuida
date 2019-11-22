@@ -19,7 +19,10 @@ PAGE_SIZE = 12
 MAX_PAGES = 4
 
 INTERFACE_PORT = 2000
-INTERFACE_IP = '192.168.0.16'
+INTERFACE_IP = '127.0.0.1'
+
+socket_interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 # When a page is created, it's located in primary memory. Return the new page id.
 def create_page():
     global count_page
@@ -69,7 +72,7 @@ def swap_from_primary_to_secondary(page_id):
     global pages
     global page_location
 
-    # protocol.save_page
+    save_page(page_id)
     del pages[page_id]
     page_location[page_id] = Page_Location.SECONDARY.value
 
@@ -81,7 +84,11 @@ def swap_from_secondary_to_primary(page_id):
 
     swap_old_page()
 
-    pages[page_id] = get_page_data(page_id)
+    pages[page_id] = PageInfo()
+    pages[page_id].content = get_page_data(page_id)
+    pages[page_id].current_size = PAGE_SIZE
+
+
     page_location[page_id] = Page_Location.PRIMARY.value
 
 
@@ -99,11 +106,21 @@ def write_primary(page_id, data, size):
 def get_page_data(page_id):
     global pages
     global page_location
+    global socket_interface
 
     if(page_location[page_id] == Page_Location.PRIMARY.value):
         return pages[page_id].content
     else:
-        return None # SE LO PIDO A LA INTERFAZ DISTRIBUIDA
+        socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
+
+        packet = local_packet_builder.create_packet_to_distributed_interface(operation_code=Operation_Code.READ.value, page_id=int(page_id, 16), data=None)
+        socket_interface.sendall(packet)                # Ask for the page.
+        packet_received = socket_interface.recv(1024)   # Wait for answer.
+        socket_interface.close()
+
+        data = struct.unpack(local_distributed_packet_builder.READ_FORMAT_INTERFACE, packet_received)
+        # Return content
+        return convert_string_to_list(data[2])
 
 
 def get_pages(page_id_list):
@@ -130,10 +147,10 @@ def swap_old_page():
 
 # To interface distributed
 def save_page(page_id):
+    global socket_interface
 
     data_string = convert_list_to_string(pages[page_id].content).encode()
     packet = local_packet_builder.create_packet_to_distributed_interface(operation_code=Operation_Code.SAVE.value, page_id=int(page_id, 16), data=data_string)
-    socket_interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     while True:
         try:
