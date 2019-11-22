@@ -12,6 +12,7 @@ from enum_operation_code import Operation_Code
 page_location = {}
 count_page = 0
 pages = {}
+date_modification_pages = {}
 
 FLOAT_SIZE = 4
 PAGE_SIZE = 12
@@ -89,7 +90,7 @@ def write_primary(page_id, data, size):
 
     pages[page_id].content.append(data)
     pages[page_id].current_size += size
-    pages[page_id].date_modification = datetime.now()
+    date_modification_pages[page_id] = datetime.now()
 
     if(pages[page_id].current_size >=  PAGE_SIZE):
         swap_from_primary_to_secondary(page_id)
@@ -102,7 +103,7 @@ def get_page_data(page_id):
     if(page_location[page_id] == Page_Location.PRIMARY.value):
         return pages[page_id].content
     else:
-        return None # protocol.get_page_data
+        return None # SE LO PIDO A LA INTERFAZ DISTRIBUIDA
 
 
 def get_pages(page_id_list):
@@ -118,11 +119,11 @@ def get_pages(page_id_list):
 def swap_old_page():
     # start with the first id
     old_id = next(iter(pages))
-    oldest_date = pages[old_id].date_modification
+    oldest_date = date_modification_pages[old_id]
 
     for id in pages:
-        if(pages[id].date_modification < oldest_date):
-            oldest_date = pages[id].date_modification
+        if(date_modification_pages[id] < oldest_date):
+            oldest_date = date_modification_pages[id]
             old_id = id
 
     swap_from_primary_to_secondary(old_id)
@@ -158,4 +159,3 @@ class PageInfo():
     def __init__(self, *args, **kwargs):
         self.current_size = 0
         self.content = []
-        self.date_modification = datetime.now()
