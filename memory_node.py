@@ -7,7 +7,8 @@ import time
 import struct
 import socket
 import packet_builders.local_distributed_packet_builder as local_packet_builder
-import node_broadcast
+import packet_builders.node_broadcast as node_broadcast
+import packet_builders.distributed_node_packet_builder as distributed_node_packet_builder
 from enum_operation_code import Operation_Code
 
 active_interface_ip = ''
@@ -92,19 +93,34 @@ class PageData():
         self.date_birth = datetime.now()
         self.date_modification = datetime.now()
 
-def start_node():
+def send_size():
+    global size_left
+    server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+    server.settimeout(0.2)
+    server.bind(("", 5000))
+
+    size_packet = node_broadcast.create(1 , size_left)
+    server.sendall(size_packet)
+    print("message sent!")
+
+
+def listen_interface():
     HOST = active_interface_ip
     PORT = 5000
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((HOST,PORT))
-        s.listen(5)
-        size_packet = node_broadcast.create(1,1)
+        s.listen()
         while True:
             conn, addr = s.accept()
             with conn:
-                s.sendto(size_packet, ('<broadcast>', (HOST,PORT)))
                 print('Connected by', addr)
                 data = conn.recv(1024)
-                conn.sendall(data)
-                
+                new_data = struct.unpack(distributed_node_packet_builder.INITIAL_FORMAT , data)
+                save_page(new_data[0],new_data[1],new_data[2],new_data[3])
 
+
+
+
+listen_interface()
