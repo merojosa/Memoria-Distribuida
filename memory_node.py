@@ -44,23 +44,25 @@ def save_page(op_id, page_id, page_size, data):
     added_page.content = data
     page_list.append(added_page)
     size_left += added_page.page_size
-
+    add_to_table(op_id, page_id, page_size, data, datetime.now(), datetime.now())
     return size_left
 
-def add_to_table(op_id, page_id, page_size, data):
+def add_to_table(op_id, page_id, page_size, data, creation_date, modification_date):
     global metadata_pos
     global data_pos
     global byte_table
     byte_table[metadata_pos] = op_id
     byte_table[metadata_pos+1] = page_id
     byte_table[metadata_pos+2] = page_size
-    byte_table[metadata_pos+3] = data_pos
+    byte_table[metadata_pos+5] = creation_date
+    byte_table[metadata_pos+8] = modification_date
+    byte_table[metadata_pos+9] = data_pos
     metadata_pos += 3
     for aByte in data:
         byte_table[data_pos] = aByte
         data_pos -= 1
-  
-    metadata_pos += 4
+    metadata_pos += 10
+    wrtite_to_file()
 
 def wrtite_to_file():
     output_file = open('file', 'wb')
@@ -119,7 +121,6 @@ def listen_interface():
                 data = conn.recv(1024)
                 new_data = struct.unpack(distributed_node_packet_builder.INITIAL_FORMAT , data)
                 save_page(new_data[0],new_data[1],new_data[2],new_data[3])
-
 
 
 
