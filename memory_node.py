@@ -59,10 +59,10 @@ def add_to_table(op_id, page_id, page_size, data):
     for aByte in data:
         byte_table[data_pos] = aByte
         data_pos -= 1
-  
+
     metadata_pos += 4
 
-def wrtite_to_file():
+def write_to_file():
     output_file = open('file', 'wb')
     array_to_file = array('d', byte_table)
     array_to_file.tofile(output_file)
@@ -82,7 +82,7 @@ def get_page_size(op_id, page_id):
     for page in page_list:
         if(page.page_id == id and page.op_id == op_id):
             return page.size_left
-    return 
+    return
 
 class PageData():
     def __init__(self, *args, **kwargs):
@@ -119,6 +119,7 @@ def listen_interface():
                 data = conn.recv(1024)
                 new_data = struct.unpack(distributed_node_packet_builder.INITIAL_FORMAT , data)
                 save_page(new_data[0],new_data[1],new_data[2],new_data[3])
+                time.sleep(1)
 
 
 
