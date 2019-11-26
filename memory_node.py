@@ -82,7 +82,7 @@ def add_to_table(op_id, page_id, page_size, data):
     print(byte_table)
     wrtite_to_file()
 
-def wrtite_to_file():
+def write_to_file():
     output_file = open('file', 'wb')
     array_to_file = array('B', byte_table)
     array_to_file.tofile(output_file)
@@ -125,7 +125,7 @@ def get_page_size(op_id, page_id):
     for page in page_list:
         if(page.page_id == id and page.op_id == op_id):
             return page.size_left
-    return 
+    return
 
 class PageData():
     def __init__(self, *args, **kwargs):
