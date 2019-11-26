@@ -3,51 +3,84 @@ import queue
 import socket
 import time
 import struct
-import packet_builders.local_distributed_packet_builder as local_packet_builder
+import packet_builders.node_broadcast as node_broadcast_builder
+import packet_builders.distributed_packet_builder as distributed_packet_builder
 from enum_operation_code import Operation_Code
 
-NODES_PORT = 6000
+NODES_PORT = 3114
+BROADCAST_NODES_PORT = 5000
 
+# page id - node id
 page_location = {}
+
+# node id - ip
+nodes_location = {}
+
+# node id - size
 current_size_nodes = {}
 
+
 LOCAL_PORT = 2000
-MY_IP = '10.232.70.91'
+MY_IP = '127.0.0.1'
 
 connection_to_local = None
 
 
-# To a node
-def save_page_node(save_packet_queue, ip_node_queue):
+# To given node
+def send_packet_node(packet, node_ip):
 
-    socket_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    while True:
-        page_id, data_size, data = save_packet_queue.get()
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_node:
+
         node_ip = choose_node()
-        ip_node_queue.put(node_ip)
 
-        # send message to node.
+        socket_node.connect((node_ip, NODES_PORT))
+
+        print("[INTERFAZ ACTIVA] Paquete enviado a nodo, ip: " + str(node_ip) + ", paquete: ", end='')
+        print(packet)
+        socket_node.sendall(packet)
+    
 
 # From a node
-def receive_packet_node(ip_node_queue):
+def receive_packet_node():
+    
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_node:
+
+        socket_node.bind((MY_IP, NODES_PORT))
+        socket_node.listen()
+
+        while True:
+            conn, addr = socket_node.accept()
+            data = conn.recv(1024)
+            
+            # DEBUGGING
+            print("[INTERFAZ ACTIVA] Paquete recibido desde NM, ip: " + addr + ", paquete: ", end='')
+            print(data)
+
+            # FALTA ENVIAR PAQUETE A MEMORIA LOCAL, Y ACTUALIZAR TAMANNO RESTANTE
+
+def enroll_node():
+    socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+    socket_broadcast_node.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    socket_broadcast_node.bind(("", BROADCAST_NODES_PORT))
     while True:
-        # No se si se necesita la ip del nodo?? @Josue
-        ip_node = ip_node_queue.get()
+        packet, addr = socket_broadcast_node.recvfrom(1024)
+        data = struct.unpack(node_broadcast_builder.FORMAT, packet)
 
-        # Waiting for the answer of the node.
+        # DEBUGGING
+        print('[INTERFAZ ACTIVA] Nodo registrado, ip: ' + addr + ', tamanno: ' + str(data[1]) )
 
-        # Cuando se reciba la respuesta por parte del nodo, lo unico que se tiene que hacer
-        # es enviar un mensaje de confirmacion (send_packet_local) usando local_packet_builder
-        # para crear el paquete.
-    pass
+        nodes_location[len(nodes_location)] = addr
+        current_size_nodes[len(current_size_nodes)] = data[1]
 
 
 # To local memory
 # Note that before it sends a packet, it needs to have a connection_to_local, ie, receive a packet from local.
 def send_packet_local(packet):
     global connection_to_local
-    print("Enviando...")
+    print("[INTERFAZ ACTIVA] Respuesta a local, paquete: ", end='')
+    print(packet)
     connection_to_local.sendall(packet)
+
 
 # From local memory
 def receive_local_packet(local_packet_queue):
@@ -64,15 +97,9 @@ def receive_local_packet(local_packet_queue):
             data = connection_to_local.recv(1024)
             if(data):
                 # To process_local_packet
+                print("[INTERFAZ ACTIVA] Paquete recibido desde ML, paquete: ", end='')
+                print(data)
                 local_packet_queue.put(data)
-                send_packet_local(local_packet_builder.create_packet_to_local(Operation_Code.OK.value, 1, None))
-
-
-# To distributed interfaces
-def broadcast_interfaces(metadata_queue):
-	while True:
-	    metadata = metadata_queue.get()
-	pass
 
 def choose_node():
     biggest_size = -1
@@ -86,39 +113,35 @@ def choose_node():
 
     return big_ip
 
-def process_local_packet(local_packet_queue, save_packet_queue):
+def process_local_packet(local_packet_queue):
     while True:
+
         packet = local_packet_queue.get()
-        data_size = struct.unpack_from(local_packet_builder.INITIAL_FORMAT_INTERFACE, packet)[2]
-        actual_format = local_packet_builder.get_format(local_packet_builder.INITIAL_FORMAT_INTERFACE, data_size)
-        data_tuple = struct.unpack(actual_format, packet)
+        operation_code = struct.unpack_from('B', packet)[0]
 
-        print(data_tuple)
+        if(operation_code == Operation_Code.SAVE.value):
+            # No need to process, is the same packet that needs to be sent
+            send_packet_node(packet, choose_node())
 
-        if(data_tuple[0] == Operation_Code.SAVE.value):
-            save_packet_queue.put( (data_tuple[1], data_tuple[2], data_tuple[3].decode()) )
-
+        elif(operation_code == Operation_Code.READ.value):  
+            # Where is the page?
+            page_id = struct.unpack(distributed_packet_builder.INITIAL_FORMAT, packet)[1]
+            node_id = page_location[page_id]
+            send_packet_node(packet, nodes_location[node_id])
 
 def main():
-
-    current_size_nodes["127.0.0.1"] = 100
-
-    save_packet_queue = queue.Queue()
-    ip_node_queue = queue.Queue()
     local_packet_queue = queue.Queue()
 
-    save_page_node_thread = threading.Thread(target=save_page_node, args=(save_packet_queue, ip_node_queue,))
-    receive_size_node_thread = threading.Thread(target=receive_packet_node, args=(ip_node_queue,))
+    receive_packet_node_thread = threading.Thread(target=receive_packet_node)
     receive_local_packet_thread = threading.Thread(target=receive_local_packet, args=(local_packet_queue,))
-    process_local_packet_therad = threading.Thread(target=process_local_packet, args=(local_packet_queue,save_packet_queue,))
+    process_local_packet_therad = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
 
-    save_page_node_thread.start()
-    receive_size_node_thread.start()
+
+    receive_packet_node_thread.start()
     receive_local_packet_thread.start()
     process_local_packet_therad.start()
 
-    save_page_node_thread.join()
-    receive_size_node_thread.join()
+    receive_packet_node_thread.join()
     receive_local_packet_thread.join()
     process_local_packet_therad.join()
 
