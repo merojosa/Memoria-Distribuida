@@ -56,7 +56,7 @@ def receive_packet_node():
             print("[INTERFAZ ACTIVA] Paquete recibido desde NM, ip: " + addr + ", paquete: ", end='')
             print(data)
 
-            # ESCUCHAR LA RESPUESTA DEL NODO
+            # FALTA ENVIAR PAQUETE A MEMORIA LOCAL, Y ACTUALIZAR TAMANNO RESTANTE
 
 def enroll_node():
     socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
@@ -97,7 +97,7 @@ def receive_local_packet(local_packet_queue):
             data = connection_to_local.recv(1024)
             if(data):
                 # To process_local_packet
-                print("[INTERFAZ ACTIVA] Paquete recibido desde ML ", end='')
+                print("[INTERFAZ ACTIVA] Paquete recibido desde ML, paquete: ", end='')
                 print(data)
                 local_packet_queue.put(data)
 
@@ -135,6 +135,7 @@ def main():
     receive_packet_node_thread = threading.Thread(target=receive_packet_node)
     receive_local_packet_thread = threading.Thread(target=receive_local_packet, args=(local_packet_queue,))
     process_local_packet_therad = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
+
 
     receive_packet_node_thread.start()
     receive_local_packet_thread.start()

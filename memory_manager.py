@@ -156,11 +156,15 @@ def save_page(page_id):
         try:
             socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
             socket_interface.sendall(packet)
-            data = socket_interface.recv(1024)
-            print(data)
+            print("[MEMORIA LOCAL] Paquete enviado a ID, ip: " + INTERFACE_IP, end='')
+            print(packet)
+            packet_distributed = socket_interface.recv(1024)
+            print("[MEMORIA LOCAL] Respuesta de ID, paquete: ", end='')
+            print(packet_distributed)
             socket_interface.close()
             break
         except socket.error:
+            print("[MEMORIA LOCAL] No se puede enviar el paquete a ID, ip: " + INTERFACE_IP  + ", intentando en 2 segundos.")
             time.sleep(2)
             continue
 
