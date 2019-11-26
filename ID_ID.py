@@ -12,23 +12,48 @@ page_location = {}
 current_size_nodes = {}
 
 
-def champions(sock, ronda):
-    mac = uuid.getnode().to_bytes(6, 'big')
-    timeout = 4
+def participantes(sock, cola, end):
+    
+    timeout = 1
+    
+    while True:
+        sock.settimeout(timeout)
+        
+        try:
+            paquete_recv, addrs = sock.recvfrom(1024)
+            print(addrs)
+            cola.put(paquete_recv)
+        
+        except socket.timeout:
+            if end.empty() == False:
+                break
+                
+    return
 
+
+def champions(sock, ronda):
+    
+    cola = queue.Queue()
+    end = queue.Queue()
+
+    mac = uuid.getnode().to_bytes(6, 'big')
     salir = False
     campeon = False
-
-    start_time = time.time()
+    timeout1 = 4
+    
+    sorteo_process = threading.Thread(target=participantes, args=(sock, cola, end))
+    sorteo_process.start()
 
     paquete = paquete_competir.crear(ronda)
     sock.sendto(paquete, ('<broadcast>', 6666))
+    
+    start_time = time.time()
 
     while True:
-        sock.settimeout(timeout)
 
         try:
-            paquete_recv, _ = sock.recvfrom(1024)
+            paquete_recv = cola.get(timeout=timeout1)
+            print(paquete_recv)
 
             if int(paquete_recv[0]) == 0:
                 
@@ -38,36 +63,47 @@ def champions(sock, ronda):
                 datos_ronda = int(datos[2])
                 
                 if mac == datos_mac:
-                    print("Soy yo")
+                    print("Descartando mi propio paquete")
                     continue
                 elif (datos_ronda > ronda) or (datos_mac > mac):
-                    print("Perdi")
+                    print("Perdi la champions")
                     salir = True
+                    end.put(True)
                     break
                 elif (datos_ronda < ronda):
-                    print("Ronda: ", ronda)
+                    print("Avanzando a la ronda: ", ronda)
                     ronda += 1
                     paquete = paquete_competir.crear(ronda)
                     sock.sendto(paquete, ('<broadcast>', 6666))
 
             elif int(paquete_recv[0]) == 1:
+                print(paquete_recv)
                 guardar_actualizaciones(paquete_activa.desempaquetar(paquete_recv))
                 salir = True
+                end.put(True)
+                print("Habemus activa")
                 break
 
-            timeout = int(timeout - (time.time() - start_time))
-            if timeout < 0:
-                print("Gane 1")
+            timeout1 = int(timeout1 - (time.time() - start_time))
+            print(timeout1)
+            if timeout1 <= 0:
+                print("Gane la champions")
                 campeon = True
+                salir = True
+                end.put(True)
                 break
 
-        except socket.timeout:
-            print("Gane 2")
+        except queue.Empty:
+            print("Gane la champions perdiendo mi propio paquete")
             campeon = True
+            salir = True
+            end.put(True)
             break
 
         if salir == True:
             break
+            
+    sorteo_process.join()
 
     return campeon
 
@@ -89,19 +125,21 @@ def recibir_actualizaciones(sock, cola):
                 keep_alive_timeout = 4
                 cola.put(paquete_recv)
         except socket.timeout:
+            #global stop
             break
 
         if keep_alive_timeout < 0:
+            #global stop
             break
 
     return
 
 
 def procesar_actualizaciones(sock, cola):
-    global stop
+    global stop_procesar_actualizaciones
 
     keep_alive_timeout = 2
-    stop = False
+    stop_procesar_actualizaciones = False
 
     while True:
         try:
@@ -110,7 +148,7 @@ def procesar_actualizaciones(sock, cola):
             guardar_actualizaciones(datos)
             break
         except queue.Empty:
-            if stop == True:
+            if procesar_actualizaciones == True:
                 break
     return
 
