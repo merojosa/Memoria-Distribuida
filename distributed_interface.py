@@ -4,7 +4,7 @@ import socket
 import time
 import struct
 import packet_builders.node_broadcast as node_broadcast_builder
-import packet_builders.local_distributed_packet_builder as local_packet_builder
+import packet_builders.distributed_packet_builder as distributed_packet_builder
 from enum_operation_code import Operation_Code
 
 NODES_PORT = 3114
@@ -34,6 +34,9 @@ def send_packet_node(packet, node_ip):
         node_ip = choose_node()
 
         socket_node.connect((node_ip, NODES_PORT))
+
+        print("[INTERFAZ ACTIVA] Paquete enviado a nodo, ip: " + str(node_ip) + ", paquete: ", end='')
+        print(packet)
         socket_node.sendall(packet)
     
 
@@ -48,9 +51,12 @@ def receive_packet_node():
         while True:
             conn, addr = socket_node.accept()
             data = conn.recv(1024)
-
+            
+            # DEBUGGING
+            print("[INTERFAZ ACTIVA] Paquete recibido desde ML ", end='')
             print(data)
-            # Do something fancy
+
+            # ESCUCHAR LA RESPUESTA DEL NODO
 
 def enroll_node():
     socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
@@ -61,7 +67,7 @@ def enroll_node():
         data = struct.unpack(node_broadcast_builder.FORMAT, packet)
 
         # DEBUGGING
-        print('Nodo registrado - id: ' + str(len(nodes_location)) + ' size: ' + str(data[1]) )
+        print('[INTERFAZ ACTIVA] Nodo registrado, ip: ' + addr + ', tamanno: ' + str(data[1]) )
 
         nodes_location[len(nodes_location)] = addr
         current_size_nodes[len(current_size_nodes)] = data[1]
@@ -71,7 +77,7 @@ def enroll_node():
 # Note that before it sends a packet, it needs to have a connection_to_local, ie, receive a packet from local.
 def send_packet_local(packet):
     global connection_to_local
-    print("Enviando a local el paquete ", end='')
+    print("[INTERFAZ ACTIVA] Respuesta a local, paquete: ", end='')
     print(packet)
     connection_to_local.sendall(packet)
 
@@ -92,8 +98,7 @@ def receive_local_packet(local_packet_queue):
             if(data):
                 # To process_local_packet
                 print(data)
-            #    local_packet_queue.put(data)
-            #    send_packet_local(local_packet_builder.create_packet_to_local(Operation_Code.OK.value, 1, None))
+                local_packet_queue.put(data)
 
 def choose_node():
     biggest_size = -1
@@ -109,19 +114,19 @@ def choose_node():
 
 def process_local_packet(local_packet_queue):
     while True:
-        # QUEDA PENDIENTE RECONOCER SI ES UN READ O WRITE
+
         packet = local_packet_queue.get()
-        data_size = struct.unpack_from(local_packet_builder.INITIAL_FORMAT_INTERFACE, packet)[2]
-        actual_format = local_packet_builder.get_format(local_packet_builder.INITIAL_FORMAT_INTERFACE, data_size)
-        data_tuple = struct.unpack(actual_format, packet)
+        operation_code = struct.unpack_from('B', packet)[0]
 
-        print(data_tuple)
+        if(operation_code == Operation_Code.SAVE.value):
+            # No need to process, is the same packet that needs to be sent
+            send_packet_node(packet, choose_node())
 
-        if(data_tuple[0] == Operation_Code.SAVE.value):
-            pass    # SI ES UN SAVE, HAY QUE ELEGIR NODO Y LLAMAR A send_packet_node
-        elif(data_tuple[0] == Operation_Code.READ.value):
-            pass    # SI ES UN READ, HAY QUE EL CUAL NODO ESTA LA PAGINA Y LLAMAR A send_packet_node
-
+        elif(operation_code == Operation_Code.READ.value):  
+            # Where is the page?
+            page_id = struct.unpack(distributed_packet_builder.INITIAL_FORMAT, packet)[1]
+            node_id = page_location[page_id]
+            send_packet_node(packet, nodes_location[node_id])
 
 def main():
     local_packet_queue = queue.Queue()
