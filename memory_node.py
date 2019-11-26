@@ -137,17 +137,35 @@ class PageData():
         self.date_birth = datetime.now()
         self.date_modification = datetime.now()
 
-def send_size():
+def send_size(broadcast_queue_packets):
     global size_left
-    conn, addr = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    conn.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    my_broadcast  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    my_broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+       
+    while True:
+        size_packet = node_broadcast.create(1 , size_left)
+        my_broadcast.sendto(size_packet, ('<broadcast>', BC_PORT))
+        print("size sent")
+        time.sleep(2)
+        if not broadcast_queue_packets.empty():
+            break
 
-    conn.settimeout(0.2)
-    conn.bind(("", 5000))
 
-    size_packet = node_broadcast.create(1 , size_left)
-    conn.sendall(size_packet)
-    print("size sent")
+
+
+def broadcast_recieve(broadcast_queue_packets):
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
+    client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    client.bind(("192.168.1.0", BC_PORT))
+    while True:
+        data, addr = client.recvfrom(1024)
+        broadcast_queue_packets.put(data)
+        print("received message: %s"%data)
+        print("pruebapaquete")
+        print(addr)
+        if (not broadcast_queue_packets.empty()):
+            break
+
 
 def listen_interface(waiting_queue_packets):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -172,10 +190,20 @@ def listen_interface(waiting_queue_packets):
                     s.sendall(send_data(initial_values[0], initial_values[1]))
 
 def main():
+    broadcast_queue_packets = queue.Queue()
     save_queue_packets = queue.Queue()
+
     save_queue_process = threading.Thread(target=listen_interface, args=(save_queue_packets,))
+    save_broadcast_process = threading.Thread(target=broadcast_recieve, args=(broadcast_queue_packets,))
+    send_broadcast_process = threading.Thread(target=send_size, args=(broadcast_queue_packets,))
+    sub_send_process = threading.Thread(target=send_size, args=(broadcast_queue_packets,))
+
+    send_broadcast_process.start()
     save_queue_process.start()
+    save_broadcast_process.start()
+
+    send_broadcast_process.join()
     save_queue_process.join()
-     
+    save_broadcast_process.join() 
 
 main()
