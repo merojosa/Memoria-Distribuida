@@ -7,7 +7,7 @@ import packet_builders.node_broadcast as node_broadcast_builder
 import packet_builders.local_distributed_packet_builder as local_packet_builder
 from enum_operation_code import Operation_Code
 
-NODES_PORT = 6000
+NODES_PORT = 3114
 BROADCAST_NODES_PORT = 5000
 
 # page id - node id
@@ -27,27 +27,29 @@ connection_to_local = None
 
 
 # To a node
-def save_page_node(save_packet_queue, ip_node_queue):
+def send_packet_node(packet, node_ip):
 
-    socket_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    while True:
-        page_id, data_size, data = save_packet_queue.get()
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_node:
+
         node_ip = choose_node()
-        ip_node_queue.put(node_ip)
 
-        # send message to node.
+        socket_node.connect((node_ip, NODES_PORT))
+        socket_node.sendall(packet)
+    
 
 # From a node
-def receive_packet_node(ip_node_queue):
-    while True:
-        ip_node = ip_node_queue.get()
+def receive_packet_node():
+    
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_node:
 
-        # Waiting for the answer of the node.
+        socket_node.bind((MY_IP, NODES_PORT))
+        socket_node.listen()
 
-        # Cuando se reciba la respuesta por parte del nodo, lo unico que se tiene que hacer
-        # es enviar un mensaje de confirmacion (send_packet_local) usando local_packet_builder
-        # para crear el paquete.
-    pass
+        while True:
+            conn, addr = socket_node.accept()
+            data = conn.recv(1024)
+
+            print(data)
 
 def enroll_node():
     socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
@@ -68,8 +70,10 @@ def enroll_node():
 # Note that before it sends a packet, it needs to have a connection_to_local, ie, receive a packet from local.
 def send_packet_local(packet):
     global connection_to_local
-    print("Enviando...")
+    print("Enviando a local el paquete ", end='')
+    print(packet)
     connection_to_local.sendall(packet)
+
 
 # From local memory
 def receive_local_packet(local_packet_queue):
@@ -116,21 +120,16 @@ def process_local_packet(local_packet_queue, save_packet_queue):
 
 
 def main():
-    save_packet_queue = queue.Queue()
-    ip_node_queue = queue.Queue()
     local_packet_queue = queue.Queue()
 
-    save_page_node_thread = threading.Thread(target=save_page_node, args=(save_packet_queue, ip_node_queue,))
-    receive_size_node_thread = threading.Thread(target=receive_packet_node, args=(ip_node_queue,))
+    receive_size_node_thread = threading.Thread(target=receive_packet_node)
     receive_local_packet_thread = threading.Thread(target=receive_local_packet, args=(local_packet_queue,))
-    process_local_packet_therad = threading.Thread(target=process_local_packet, args=(local_packet_queue,save_packet_queue,))
+    process_local_packet_therad = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
 
-    save_page_node_thread.start()
     receive_size_node_thread.start()
     receive_local_packet_thread.start()
     process_local_packet_therad.start()
 
-    save_page_node_thread.join()
     receive_size_node_thread.join()
     receive_local_packet_thread.join()
     process_local_packet_therad.join()
