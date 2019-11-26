@@ -23,7 +23,7 @@ max_size = 100
 size_left = 0
 metadata_pos = 0
 data_pos = max_size-1
-byte_table = strs = ["" for x in range(max_size)]#bytearray(max_size)#" "*max_size
+byte_table = strs = [0 for x in range(max_size)]#bytearray(max_size)#" "*max_size
 page_list = []
 count_node = 0
 
@@ -84,14 +84,14 @@ def add_to_table(op_id, page_id, page_size, data):
 
 def wrtite_to_file():
     output_file = open('file', 'wb')
-    array_to_file = array('b', byte_table)
+    array_to_file = array('B', byte_table)
     array_to_file.tofile(output_file)
     output_file.close()
 
 def read_from_file():
     input_file = open('file', 'rb')
     #file_array = array('b')
-    file_array = array("b")
+    file_array = array("B")
     file_array.fromstring(input_file.read())
     print(file_array)
     byte_table = file_array
@@ -104,8 +104,14 @@ def get_data(op_id, page_id):
     read_from_file()
     for i in range(0, metadata_pos, 20):
         if byte_table[i] == op_id and byte_table[i+1] == page_id:
-            print(struct.unpack(node_data_packet_builder.FORMAT, byte_table[i+20]))
-            
+            dataArray = []
+            for j in range(i,i+20):
+                dataArray.append(byte_table[j])
+            print(dataArray)
+            pack = node_data_packet_builder.create(dataArray[0],dataArray[1],dataArray[2],dataArray[3],dataArray[4],dataArray[5])
+            print (pack)
+            print (struct.unpack(node_data_packet_builder.FORMAT, pack))
+            #print(struct.unpack(node_data_packet_builder.FORMAT, byte_table[i+20]))
             break
 
 
@@ -193,5 +199,6 @@ def main():
 
 #listen_interface()
 
-add_to_table(111,112,6,'gsdgseg')
+add_to_table(111,123,6,'gsdgseg')
 read_from_file()
+get_data(111,123)
