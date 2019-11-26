@@ -16,6 +16,8 @@ def get_hex_mac(mac):
 
 def main():
 
+    """
+
     # MAC en 6 bytes
     mac = uuid.getnode().to_bytes(6, 'big')
     print("MAC en 6 bytes: ", mac)
@@ -83,8 +85,10 @@ def main():
 
     print()
 
+    """
+
     # Pruebas de socket
-    UDP_IP = '192.168.1.199'
+    UDP_IP = ''
     UDP_PORT = 6666
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)

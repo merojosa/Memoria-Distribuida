@@ -31,15 +31,20 @@ def champions(sock, ronda):
             paquete_recv, _ = sock.recvfrom(1024)
 
             if int(paquete_recv[0]) == 0:
-                paquete_recv = paquete_competir.desempaquetar(paquete_recv)
-                if paquete_recv[1] == mac:
+                
+                datos = paquete_competir.desempaquetar(paquete_recv)
+                datos_op_code = int(datos[0])
+                datos_mac = datos[1]
+                datos_ronda = int(datos[2])
+                
+                if mac == datos_mac:
                     print("Soy yo")
                     continue
-                elif (int(paquete_recv[2]) > ronda) or (paquete_recv[1] > mac):
+                elif (datos_ronda > ronda) or (datos_mac > mac):
                     print("Perdi")
                     salir = True
                     break
-                else:
+                elif (datos_ronda < ronda):
                     print("Ronda: ", ronda)
                     ronda += 1
                     paquete = paquete_competir.crear(ronda)
@@ -50,7 +55,7 @@ def champions(sock, ronda):
                 salir = True
                 break
 
-            timeout = int(timeout - time.time() - start_time)
+            timeout = int(timeout - (time.time() - start_time))
             if timeout < 0:
                 print("Gane 1")
                 campeon = True
