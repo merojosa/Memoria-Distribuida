@@ -53,7 +53,7 @@ def receive_packet_node():
             data = conn.recv(1024)
             
             # DEBUGGING
-            print("[INTERFAZ ACTIVA] Paquete recibido desde ML ", end='')
+            print("[INTERFAZ ACTIVA] Paquete recibido desde NM, ip: " + addr + ", paquete: ", end='')
             print(data)
 
             # ESCUCHAR LA RESPUESTA DEL NODO
@@ -97,6 +97,7 @@ def receive_local_packet(local_packet_queue):
             data = connection_to_local.recv(1024)
             if(data):
                 # To process_local_packet
+                print("[INTERFAZ ACTIVA] Paquete recibido desde ML ", end='')
                 print(data)
                 local_packet_queue.put(data)
 
