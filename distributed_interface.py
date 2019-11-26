@@ -21,7 +21,7 @@ current_size_nodes = {}
 
 
 LOCAL_PORT = 2000
-MY_IP = '127.0.0.1'
+MY_IP = '192.168.1.142'
 
 connection_to_local = None
 
@@ -80,6 +80,7 @@ def enroll_node():
     socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
     socket_broadcast_node.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     socket_broadcast_node.bind(("", BROADCAST_NODES_PORT))
+
     while True:
         packet, addr = socket_broadcast_node.recvfrom(1024)
         data = struct.unpack(node_broadcast_builder.FORMAT, packet)
@@ -154,15 +155,17 @@ def main():
 
     receive_packet_node_thread = threading.Thread(target=receive_packet_node)
     receive_local_packet_thread = threading.Thread(target=receive_local_packet, args=(local_packet_queue,))
-    process_local_packet_therad = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
-
+    process_local_packet_thread = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
+    enroll_node_thread = threading.Thread(target=enroll_node,)
 
     receive_packet_node_thread.start()
     receive_local_packet_thread.start()
-    process_local_packet_therad.start()
-
+    process_local_packet_thread.start()
+    enroll_node_thread.start()
+    
     receive_packet_node_thread.join()
     receive_local_packet_thread.join()
-    process_local_packet_therad.join()
+    process_local_packet_thread.join()
+    enroll_node_thread.join()
 
 main()
