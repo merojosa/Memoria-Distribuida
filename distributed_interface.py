@@ -26,7 +26,7 @@ MY_IP = '127.0.0.1'
 connection_to_local = None
 
 
-# To a node
+# To given node
 def send_packet_node(packet, node_ip):
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_node:
@@ -50,6 +50,7 @@ def receive_packet_node():
             data = conn.recv(1024)
 
             print(data)
+            # Do something fancy
 
 def enroll_node():
     socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
@@ -106,8 +107,9 @@ def choose_node():
 
     return big_ip
 
-def process_local_packet(local_packet_queue, save_packet_queue):
+def process_local_packet(local_packet_queue):
     while True:
+        # QUEDA PENDIENTE RECONOCER SI ES UN READ O WRITE
         packet = local_packet_queue.get()
         data_size = struct.unpack_from(local_packet_builder.INITIAL_FORMAT_INTERFACE, packet)[2]
         actual_format = local_packet_builder.get_format(local_packet_builder.INITIAL_FORMAT_INTERFACE, data_size)
@@ -116,21 +118,23 @@ def process_local_packet(local_packet_queue, save_packet_queue):
         print(data_tuple)
 
         if(data_tuple[0] == Operation_Code.SAVE.value):
-            save_packet_queue.put( (data_tuple[1], data_tuple[2], data_tuple[3].decode()) )
+            pass    # SI ES UN SAVE, HAY QUE ELEGIR NODO Y LLAMAR A send_packet_node
+        elif(data_tuple[0] == Operation_Code.READ.value):
+            pass    # SI ES UN READ, HAY QUE EL CUAL NODO ESTA LA PAGINA Y LLAMAR A send_packet_node
 
 
 def main():
     local_packet_queue = queue.Queue()
 
-    receive_size_node_thread = threading.Thread(target=receive_packet_node)
+    receive_packet_node_thread = threading.Thread(target=receive_packet_node)
     receive_local_packet_thread = threading.Thread(target=receive_local_packet, args=(local_packet_queue,))
     process_local_packet_therad = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
 
-    receive_size_node_thread.start()
+    receive_packet_node_thread.start()
     receive_local_packet_thread.start()
     process_local_packet_therad.start()
 
-    receive_size_node_thread.join()
+    receive_packet_node_thread.join()
     receive_local_packet_thread.join()
     process_local_packet_therad.join()
 
