@@ -1,9 +1,11 @@
 import paquete_competir
 import paquete_activa
+import ID_ID
 
 import uuid
 import socket
 import struct
+import time
 
 
 def get_hex_mac(mac):
@@ -38,12 +40,12 @@ def main():
     # Soy Activa sin datos
     lista_paginas = []
     lista_nodos = []
-    paquete = paquete_activa.crear(op_code=1, numero_paginas=0, numero_nodos=0, lista_paginas=lista_paginas, lista_nodos=lista_nodos)
+    paquete = paquete_activa.crear(op_code=1, numero_paginas=0, numero_nodos=0)
     unpack_paquete = paquete_activa.desempaquetar(paquete)
     print("Soy Activa sin datos: ", unpack_paquete)
 
     # Soy Activa con todos los datos
-    lista_paginas = [1, 2, 2, 3]
+    lista_paginas = [6, 7, 4, 5]
     lista_nodos = [1, ip, 50, 2, ip, 50]
     paquete = paquete_activa.crear(op_code=1, numero_paginas=2, numero_nodos=2, lista_paginas=lista_paginas, lista_nodos=lista_nodos)
     unpack_paquete = paquete_activa.desempaquetar(paquete)
@@ -52,7 +54,7 @@ def main():
     # Soy Activa sin paginas y con nodos
     lista_paginas = []
     lista_nodos = [1, ip, 50, 2, ip, 50]
-    paquete = paquete_activa.crear(op_code=1, numero_paginas=0, numero_nodos=2, lista_paginas=lista_paginas, lista_nodos=lista_nodos)
+    paquete = paquete_activa.crear(op_code=1, numero_paginas=0, numero_nodos=2, lista_nodos=lista_nodos)
     unpack_paquete = paquete_activa.desempaquetar(paquete)
     print("Soy Activa sin paginas y con nodos: ", unpack_paquete)
 
@@ -78,6 +80,17 @@ def main():
     paquete = paquete_activa.crear(op_code=2, numero_paginas=0, numero_nodos=2, lista_paginas=lista_paginas, lista_nodos=lista_nodos)
     unpack_paquete = paquete_activa.desempaquetar(paquete)
     print("Keep Alive sin paginas y con nodos: ", unpack_paquete)
+
+    print()
+
+    # Pruebas de socket
+    UDP_IP = ""
+    UDP_PORT = 6666
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    sock.bind((UDP_IP, UDP_PORT))
+    print(ID_ID.champions(sock, 0))
 
 
 main()

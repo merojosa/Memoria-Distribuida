@@ -5,15 +5,15 @@ DUMP2 = 'B4sI'
 BASE_FORMAT = 'BBB'
 
 
-def crear(op_code, numero_paginas, numero_nodos, lista_paginas, lista_nodos):
+def crear(op_code, numero_paginas, numero_nodos, lista_paginas=None, lista_nodos=None):
     FORMAT = BASE_FORMAT
 
     if int(numero_paginas) != 0:
-        for x in range(numero_paginas):
+        for _ in range(numero_paginas):
             FORMAT = FORMAT + DUMP1
 
     if int(numero_nodos) != 0:
-        for x in range(numero_nodos):
+        for _ in range(numero_nodos):
             FORMAT = FORMAT + DUMP2
 
     if (numero_paginas == 0 and numero_nodos == 0):
@@ -32,11 +32,11 @@ def desempaquetar(paquete):
     datos = struct.unpack(BASE_FORMAT, paquete[:3])
 
     if int(datos[1]) != 0:
-        for x in range(datos[1]):
+        for _ in range(datos[1]):
             FORMAT = FORMAT + DUMP1
 
     if int(datos[2]) != 0:
-        for x in range(datos[2]):
+        for _ in range(datos[2]):
             FORMAT = FORMAT + DUMP2
 
     return struct.unpack(FORMAT, paquete)
