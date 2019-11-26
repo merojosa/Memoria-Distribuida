@@ -6,7 +6,7 @@ import uuid
 import socket
 import struct
 import time
-
+import os
 
 def get_hex_mac(mac):
     mac_num = hex(int.from_bytes(mac, 'big')).replace('0x', '').upper()
@@ -84,13 +84,19 @@ def main():
     print()
 
     # Pruebas de socket
-    UDP_IP = ""
+    UDP_IP = '192.168.1.199'
     UDP_PORT = 6666
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.bind((UDP_IP, UDP_PORT))
     print(ID_ID.champions(sock, 0))
+    
+    #os.system("sudo ifconfig eth0 down")
+    #os.system("sudo ifconfig eth0 10.1.138.199")
+    #os.system("sudo ifconfig wlan0 192.168.1.199")
+    #os.system("sudo ifconfig eth0 up")
 
+    
 
 main()
