@@ -2,7 +2,7 @@ from page_location import *
 from datetime import *
 import file_manager
 import re
-import packet_builders.local_distributed_packet_builder as local_packet_builder
+import packet_builders.distributed_packet_builder as local_packet_builder
 import struct
 import socket
 import time
@@ -113,12 +113,12 @@ def get_page_data(page_id):
     else:
         socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
 
-        packet = local_packet_builder.create_packet_to_distributed_interface(operation_code=Operation_Code.READ.value, page_id=int(page_id, 16), data=None)
+        packet = local_packet_builder.create_read_packet(Operation_Code.READ, page_id)
         socket_interface.sendall(packet)                # Ask for the page.
         packet_received = socket_interface.recv(1024)   # Wait for answer.
         socket_interface.close()
 
-        data = struct.unpack(local_distributed_packet_builder.READ_FORMAT_INTERFACE, packet_received)
+        data = struct.unpack(local_packet_builder.INITIAL_FORMAT + str(PAGE_SIZE) + 's', packet_received)
         # Return content
         return convert_string_to_list(data[2])
 
@@ -150,7 +150,7 @@ def save_page(page_id):
     global socket_interface
 
     data_string = convert_list_to_string(pages[page_id].content).encode()
-    packet = local_packet_builder.create_packet_to_distributed_interface(operation_code=Operation_Code.SAVE.value, page_id=int(page_id, 16), data=data_string)
+    packet = local_packet_builder.create_save_packet(operation_code=Operation_Code.SAVE.value, page_id=int(page_id, 16), data_size=PAGE_SIZE, data=data_string)
 
     while True:
         try:
