@@ -3,19 +3,22 @@ import queue
 import socket
 import time
 import struct
+import packet_builders.node_broadcast as node_broadcast_builder
 import packet_builders.local_distributed_packet_builder as local_packet_builder
 from enum_operation_code import Operation_Code
 
 NODES_PORT = 6000
+BROADCAST_NODES_PORT = 5000
 
 # page id - node id
 page_location = {}
 
+# node id - ip
+nodes_location = {}
+
 # node id - size
 current_size_nodes = {}
 
-# node id - ip
-nodes_location = {}
 
 LOCAL_PORT = 2000
 MY_IP = '127.0.0.1'
@@ -37,7 +40,6 @@ def save_page_node(save_packet_queue, ip_node_queue):
 # From a node
 def receive_packet_node(ip_node_queue):
     while True:
-        # No se si se necesita la ip del nodo?? @Josue
         ip_node = ip_node_queue.get()
 
         # Waiting for the answer of the node.
@@ -46,6 +48,20 @@ def receive_packet_node(ip_node_queue):
         # es enviar un mensaje de confirmacion (send_packet_local) usando local_packet_builder
         # para crear el paquete.
     pass
+
+def enroll_node():
+    socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+    socket_broadcast_node.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    socket_broadcast_node.bind(("", BROADCAST_NODES_PORT))
+    while True:
+        packet, addr = socket_broadcast_node.recvfrom(1024)
+        data = struct.unpack(node_broadcast_builder.FORMAT, packet)
+
+        # DEBUGGING
+        print('Nodo registrado - id: ' + str(len(nodes_location)) + ' size: ' + str(data[1]) )
+
+        nodes_location[len(nodes_location)] = addr
+        current_size_nodes[len(current_size_nodes)] = data[1]
 
 
 # To local memory
@@ -73,13 +89,6 @@ def receive_local_packet(local_packet_queue):
                 print(data)
             #    local_packet_queue.put(data)
             #    send_packet_local(local_packet_builder.create_packet_to_local(Operation_Code.OK.value, 1, None))
-
-
-# To distributed interfaces
-def broadcast_interfaces(metadata_queue):
-	while True:
-	    metadata = metadata_queue.get()
-	pass
 
 def choose_node():
     biggest_size = -1
