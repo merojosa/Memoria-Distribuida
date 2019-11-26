@@ -94,7 +94,7 @@ def champions(sock, ronda):
                 break
 
         except queue.Empty:
-            print("Gane la champions perdiendo mi propio paquete")
+            print("Gane la champions")
             campeon = True
             salir = True
             end.put(True)
