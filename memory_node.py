@@ -6,10 +6,15 @@ import socket
 import time
 import struct
 import socket
+import queue
+import threading
+
 import packet_builders.local_distributed_packet_builder as local_packet_builder
 import packet_builders.node_broadcast as node_broadcast
 import packet_builders.distributed_node_packet_builder as distributed_node_packet_builder
 import packet_builders.node_data_packet_builder as node_data_packet_builder
+import packet_builders.node_ok_packet_builder as node_ok_packet_builder
+
 from enum_operation_code import Operation_Code
 
 active_interface_ip = ''
@@ -18,9 +23,13 @@ max_size = 100
 size_left = 0
 metadata_pos = 0
 data_pos = max_size-1
-byte_table = bytearray(max_size)#" "*max_size
+byte_table = strs = ["" for x in range(max_size)]#bytearray(max_size)#" "*max_size
 page_list = []
 count_node = 0
+
+BC_PORT = 5000
+
+ID_PORT = 2000
 
 def set_id():
     global count_node
@@ -45,14 +54,15 @@ def save_page(op_id, page_id, page_size, data):
     added_page.content = data
     page_list.append(added_page)
     size_left += added_page.page_size
-    add_to_table(op_id, page_id, page_size, data, datetime.now(), datetime.now())
+    add_to_table(op_id, page_id, page_size, data)
     return size_left
 
-def add_to_table(op_id, page_id, page_size, data, creation_date, modification_date):
+def add_to_table(op_id, page_id, page_size, data):
     global metadata_pos
     global data_pos
     global byte_table
-
+    creation_date = datetime.now()
+    modification_date = datetime.now()
     # Convert the current date to timestamp.  For getting the datetime again: datetime.datetime.fromtimestamp(timestamp)
     #timestamp = int(time.mktime(current_date.timetuple()))
     crea_time_bytes = int(time.mktime(creation_date.timetuple()))
@@ -80,9 +90,10 @@ def wrtite_to_file():
 
 def read_from_file():
     input_file = open('file', 'rb')
-    file_array = array('b')
+    #file_array = array('b')
+    file_array = array("b")
     file_array.fromstring(input_file.read())
-    #print(file_array)
+    print(file_array)
     byte_table = file_array
     print(byte_table)
     input_file.close()
@@ -94,8 +105,10 @@ def get_data(op_id, page_id):
     for i in range(0, metadata_pos, 20):
         if byte_table[i] == op_id and byte_table[i+1] == page_id:
             print(struct.unpack(node_data_packet_builder.FORMAT, byte_table[i+20]))
+            
             break
-        
+
+
 
 def get_page_content(op_id, page_id):
     for page in page_list:
@@ -119,37 +132,66 @@ class PageData():
 
 def send_size():
     global size_left
-    server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    while True:
+        broadcaster = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        broadcaster.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-    server.settimeout(0.2)
-    server.bind(("", 5000))
+        broadcaster.settimeout(0.2)
+        broadcaster.bind(("", 5000))
 
-    size_packet = node_broadcast.create(1 , size_left)
-    server.sendall(size_packet)
-    print("message sent!")
+        size_packet = node_broadcast.create(1 , size_left)
+        broadcaster.sendall(size_packet)
+        print("size sent")
 
 
-def listen_interface():
-    HOST = active_interface_ip
-    PORT = 5000
+
+
+def send_OK(sock, page_queue_packets):
+     while True:
+        packet, addr = page_queue_packets.get()
+
+        data = struct.unpack(distributed_node_packet_builder.INITIAL_FORMAT, packet)
+        #ok = node_ok_packet_builder.create(t=data[2], sensor_id=data[3], sequence=data[0])
+
+
+def listen_interface(waiting_queue_packets, hostname):
+    
+    packet, addr = socket.socket.recvfrom(1024)
+    waiting_queue_packets.put((packet, addr))
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST,PORT))
+        s.bind(("",ID_PORT))
         s.listen()
         while True:
             conn, addr = s.accept()
             with conn:
                 print('Connected by', addr)
                 data = conn.recv(1024)
-                new_data = struct.unpack(distributed_node_packet_builder.INITIAL_FORMAT , data)
-                save_page(new_data[0],new_data[1],new_data[2],new_data[3])
+                initial_values = struct.unpack_from('=BB', data, 1)
+                if(initial_values[0] == '0x0'):
+                    new_data = struct.unpack(distributed_node_packet_builder.INITIAL_FORMAT , data)
+                    waiting_queue_packets.put(new_data[0],new_data[1],new_data[2],new_data[3])  
+                if(initial_values[0] == '0x1'):
+                    get_data(initial_values[0],initial_values[1])              
 
 
-save_page(170,171,24,"ewre")
-save_page(177,178,24,'this')
-get_data(177,178)
-read_from_file()
+
+def main():
+
+    save_queue_packets = queue.Queue()
+     #= queue.Queue()
+
+   # listen_interface(sock, save_queue_packets, socket.gethostname())
+
+
+#save_page(170,171,24,"ewre")
+#save_page(177,178,24,'this')
+#get_data(177,178)
+#read_from_file()
 #save_page(179,180,24,'what')
 #read_from_file()
 
 #listen_interface()
+
+add_to_table(111,112,6,'gsdgseg')
+read_from_file()
