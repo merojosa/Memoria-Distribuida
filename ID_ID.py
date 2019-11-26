@@ -11,7 +11,7 @@ import paquete_activa
 page_location = {}
 current_size_nodes = {}
 
-
+# Sirve
 def participantes(sock, cola, end):
     
     timeout = 1
@@ -30,7 +30,7 @@ def participantes(sock, cola, end):
                 
     return
 
-
+# Sirve
 def champions(sock, ronda):
     
     cola = queue.Queue()
@@ -107,7 +107,7 @@ def champions(sock, ronda):
 
     return campeon
 
-
+# No sirve
 def recibir_actualizaciones(sock, cola):
     keep_alive_timeout = 4
 
@@ -134,7 +134,7 @@ def recibir_actualizaciones(sock, cola):
 
     return
 
-
+# No sirve
 def procesar_actualizaciones(sock, cola):
     global stop_procesar_actualizaciones
 
@@ -152,7 +152,7 @@ def procesar_actualizaciones(sock, cola):
                 break
     return
 
-
+# Igual y sirve
 def guardar_actualizaciones(datos):
     pagina_id = 3
     nodo_id = pagina_id + 1
