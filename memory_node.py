@@ -138,29 +138,26 @@ class PageData():
 
 def send_size():
     global size_left
-    while True:
-        broadcaster = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        broadcaster.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    conn, addr = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    conn.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-        broadcaster.settimeout(0.2)
-        broadcaster.bind(("", 5000))
+    conn.settimeout(0.2)
+    conn.bind(("", 5000))
 
-        size_packet = node_broadcast.create(1 , size_left)
-        broadcaster.sendall(size_packet)
-        print("size sent")
-
+    size_packet = node_broadcast.create(1 , size_left)
+    conn.sendall(size_packet)
+    print("size sent")
 
 
 
 def send_OK(sock, page_queue_packets):
      while True:
         packet, addr = page_queue_packets.get()
-
         data = struct.unpack(distributed_node_packet_builder.INITIAL_FORMAT, packet)
         #ok = node_ok_packet_builder.create(t=data[2], sensor_id=data[3], sequence=data[0])
 
 
-def listen_interface(waiting_queue_packets, hostname):
+def listen_interface(waiting_queue_packets):
     
     packet, addr = socket.socket.recvfrom(1024)
     waiting_queue_packets.put((packet, addr))
@@ -185,6 +182,7 @@ def listen_interface(waiting_queue_packets, hostname):
 def main():
 
     save_queue_packets = queue.Queue()
+
      #= queue.Queue()
 
    # listen_interface(sock, save_queue_packets, socket.gethostname())
