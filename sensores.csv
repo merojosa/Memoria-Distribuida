@@ -14,7 +14,7 @@ ID grupo (1 byte),IDs de sensores (3 bytes),Grupo,,Código de sensor (1 byte),Ti
 ,,,,,,,
 5,1,Equipo 404,,0x01,Movimiento,Booleano,0x01
 5,2,Equipo 404,,0x06,Humedad,Float,40.21
-5,2,Equipo 404,,0x08,Temperatura,Float,27.05
+5,3,Equipo 404,,0x08,Temperatura,Float,27.05
 ,,,,,,,
 6,1,Poffis,,0x09,Ultrasónico,Entero,500
 6,2,Poffis,,0x07,Big sound,Entero,1050
