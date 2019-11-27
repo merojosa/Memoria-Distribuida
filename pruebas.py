@@ -8,7 +8,7 @@ import time
 import os
 
 def get_hex_mac(mac):
-    mac_num = hex(int.from_bytes(mac, 'big')).replace('0x', '').upper()
+    mac_num = hex(int.from_bytes(mac, 'little')).replace('0x', '').upper()
     mac = ':'.join(mac_num[i: i + 2] for i in range(0, 11, 2))
     return mac
 
@@ -17,7 +17,7 @@ def main():
 
     """
     # MAC en 6 bytes
-    mac = uuid.getnode().to_bytes(6, 'big')
+    mac = uuid.getnode().to_bytes(6, 'little')
     print("MAC en 6 bytes: ", mac)
     print("MAC normal: ", get_hex_mac(mac))
 

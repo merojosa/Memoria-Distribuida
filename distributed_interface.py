@@ -51,7 +51,7 @@ def tiempo_extra(sock):
     return campeon
 
 
-def participantes(sock, cola, end):
+def escuchar_datos(sock, cola, end):
     
     timeout = 1
     
@@ -73,12 +73,12 @@ def champions(sock, ronda):
     cola = queue.Queue()
     end = queue.Queue()
 
-    mac = uuid.getnode().to_bytes(6, 'big')
+    mac = uuid.getnode().to_bytes(6, 'little')
     salir = False
     campeon = False
     timeout1 = 4
     
-    sorteo_process = threading.Thread(target=participantes, args=(sock, cola, end))
+    sorteo_process = threading.Thread(target=escuchar_datos, args=(sock, cola, end))
     sorteo_process.start()
 
     paquete = paquete_competir.crear(ronda)
@@ -120,7 +120,7 @@ def champions(sock, ronda):
                 print("Habemus activa")
                 break
 
-            timeout1 = int(timeout1 - (time.time() - start_time))
+            timeout1 = timeout1 - (time.time() - start_time)
             if timeout1 <= 0:
                 print("Gane la champions sin tiempo extra")
                 paquete = paquete_dump_total()
@@ -163,53 +163,7 @@ def paquete_dump_total():
         
     return paquete_activa.crear(op_code=1, numero_paginas=numero_paginas, numero_nodos=numero_nodos, lista_paginas, lista_nodos)
     
-    
-# No sirve
-def recibir_actualizaciones(sock, cola):
-    keep_alive_timeout = 4
 
-    while True:
-        start_time = time.time()
-
-        sock.settimeout(keep_alive_timeout)
-
-        try:
-            paquete_recv, _ = sock.recvfrom(1024)
-
-            if int(paquete_recv[0]) != 2:
-                keep_alive_timeout = int(keep_alive_timeout - time.time() - start_time)
-            else:
-                keep_alive_timeout = 4
-                cola.put(paquete_recv)
-        except socket.timeout:
-            #global stop
-            break
-
-        if keep_alive_timeout < 0:
-            #global stop
-            break
-
-    return
-
-# No sirve
-def procesar_actualizaciones(sock, cola):
-    global stop_procesar_actualizaciones
-
-    keep_alive_timeout = 2
-    stop_procesar_actualizaciones = False
-
-    while True:
-        try:
-            paquete = cola.get(timeout=keep_alive_timeout)
-            datos = paquete_activa.desempaquetar(paquete)
-            guardar_actualizaciones(datos)
-            break
-        except queue.Empty:
-            if procesar_actualizaciones == True:
-                break
-    return
-
-# Igual y sirve
 def guardar_actualizaciones(datos):
     pagina_id = 3
     nodo_id = pagina_id + 1
@@ -229,7 +183,44 @@ def guardar_actualizaciones(datos):
         active_distributed_interface.current_size_nodes[datos[nodo_id]] = espacio_disponible]
 
     return
+    
+    
+def actualizar_tabla(sock):
+    cola = queue.Queue()
+    end = queue.Queue()
+    
+    keep_alive_timeout = 4
+    
+    datos_process = threading.Thread(target=escuchar_datos, args=(sock, cola, end))
+    datos_process.start()
+    
+    start_time = time.time()
 
+    while True:
+
+        try:
+            paquete_recv = cola.get(timeout=keep_alive_timeout)
+
+            if int(paquete_recv[0]) != 2:
+                keep_alive_timeout = keep_alive_timeout - (time.time() - start_time)
+
+            else:
+                keep_alive_timeout = 4
+                datos = paquete_activa.desempaquetar(paquete_recv)
+                guardar_actualizaciones(datos)
+
+            if keep_alive_timeout <= 0:
+                end.put(True)
+                break
+
+        except queue.Empty:
+            end.put(True)
+            break
+            
+    datos_process.join()
+    
+    return
+    
 
 def start():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -252,17 +243,16 @@ def start():
                 # os.system("sudo ifconfig eth0 down")
                 # os.system("sudo ifconfig eth0 AQUI LA IP FIJA")
                 # os.system("sudo ifconfig eth0 up")
+                
+                # Esto debe ser un hilo
                 active_distributed_interface.execute()
+                
+                # Aqui debo actualizar interfaces pasivas
         else:
 
-            receive_packet_process = threading.Thread(target=recibir_actualizaciones, args=(sock, paquetes_pasivos,))
-            process_packet_process = threading.Thread(target=procesar_actualizaciones, args=(sock, paquetes_pasivos,))
-
+            receive_packet_process = threading.Thread(target=actualizar_tabla, args=(sock,))
             receive_packet_process.start()
-            process_packet_process.start()
-
             receive_packet_process.join()
-            process_packet_process.join()
 
         ronda = 3
 
