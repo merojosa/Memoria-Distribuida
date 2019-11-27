@@ -21,19 +21,19 @@ current_size_nodes = {}
 
 
 LOCAL_PORT = 2000
-MY_IP = '127.0.0.1'
+MY_IP = '192.168.1.142'
 
 connection_to_local = None
 
 
 # To given node
-def send_packet_node(packet, node_ip):
+def send_packet_node(packet, node_ip, node_port):
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_node:
 
         node_ip = choose_node()
 
-        socket_node.connect((node_ip, NODES_PORT))
+        socket_node.connect((node_ip, node_port))
 
         print("[INTERFAZ ACTIVA] Paquete enviado a nodo, ip: " + str(node_ip) + ", paquete: ", end='')
         print(packet)
@@ -50,18 +50,37 @@ def receive_packet_node():
 
         while True:
             conn, addr = socket_node.accept()
-            data = conn.recv(1024)
+            packet = conn.recv(1024)
             
             # DEBUGGING
             print("[INTERFAZ ACTIVA] Paquete recibido desde NM, ip: " + addr + ", paquete: ", end='')
-            print(data)
+            print(packet)
 
-            # FALTA ENVIAR PAQUETE A MEMORIA LOCAL, Y ACTUALIZAR TAMANNO RESTANTE
+            data_tuple = struct.unpack_from(distributed_packet_builder.INITIAL_FORMAT, packet)
+
+            operation_code = data_tuple[0]
+            page_id = data_tuple[1]
+
+            if(operation_code == Operation_Code.OK.value):
+
+                # Update size
+                size = struct.unpack_from(distributed_packet_builder.INITIAL_FORMAT + "I", packet)[2]
+                node_id = page_location[page_id]
+                current_size_nodes[node_id] = size
+
+                new_packet = distributed_packet_builder.create_ok_local_packet(page_id=page_id)
+                send_packet_local(new_packet)
+
+            elif(operation_code == Operation_Code.SEND.value):
+
+                send_packet_local(packet)
+
 
 def enroll_node():
     socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
     socket_broadcast_node.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     socket_broadcast_node.bind(("", BROADCAST_NODES_PORT))
+
     while True:
         packet, addr = socket_broadcast_node.recvfrom(1024)
         data = struct.unpack(node_broadcast_builder.FORMAT, packet)
@@ -71,6 +90,8 @@ def enroll_node():
 
         nodes_location[len(nodes_location)] = addr
         current_size_nodes[len(current_size_nodes)] = data[1]
+
+        send_packet_node(distributed_packet_builder.create_ok_broadcast_packet(), addr , BROADCAST_NODES_PORT)        
 
 
 # To local memory
@@ -121,28 +142,30 @@ def process_local_packet(local_packet_queue):
 
         if(operation_code == Operation_Code.SAVE.value):
             # No need to process, is the same packet that needs to be sent
-            send_packet_node(packet, choose_node())
+            send_packet_node(packet, choose_node(), NODES_PORT)
 
         elif(operation_code == Operation_Code.READ.value):  
             # Where is the page?
             page_id = struct.unpack(distributed_packet_builder.INITIAL_FORMAT, packet)[1]
             node_id = page_location[page_id]
-            send_packet_node(packet, nodes_location[node_id])
+            send_packet_node(packet, nodes_location[node_id], NODES_PORT)
 
 def main():
     local_packet_queue = queue.Queue()
 
     receive_packet_node_thread = threading.Thread(target=receive_packet_node)
     receive_local_packet_thread = threading.Thread(target=receive_local_packet, args=(local_packet_queue,))
-    process_local_packet_therad = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
-
+    process_local_packet_thread = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
+    enroll_node_thread = threading.Thread(target=enroll_node,)
 
     receive_packet_node_thread.start()
     receive_local_packet_thread.start()
-    process_local_packet_therad.start()
-
+    process_local_packet_thread.start()
+    enroll_node_thread.start()
+    
     receive_packet_node_thread.join()
     receive_local_packet_thread.join()
-    process_local_packet_therad.join()
+    process_local_packet_thread.join()
+    enroll_node_thread.join()
 
 main()
