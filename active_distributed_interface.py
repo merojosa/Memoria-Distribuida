@@ -8,8 +8,8 @@ import packet_builders.distributed_packet_builder as distributed_packet_builder
 import packet_builders.node_ok_packet_builder as node_ok_packet_builder
 from enum_operation_code import Operation_Code
 
-NODES_PORT = 4004
-BROADCAST_NODES_PORT = 2225
+NODES_PORT = 3117
+BROADCAST_NODES_PORT = 5003
 
 # page id - node id
 page_location = {}
@@ -63,6 +63,8 @@ def enroll_node():
     socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     socket_broadcast_node.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     socket_broadcast_node.bind(("10.1.255.255", BROADCAST_NODES_PORT))
+
+
     while True:
         packet, addr = socket_broadcast_node.recvfrom(1024)
         
@@ -142,6 +144,7 @@ def process_local_packet(local_packet_queue):
             
             print("[INTERFAZ ACTIVA] Paquete recibido desde NM ", end="")
             print(answer)
+            send_packet_local(answer)
 
 
 def execute():
