@@ -21,7 +21,7 @@ current_size_nodes = {}
 
 
 LOCAL_PORT = 2000
-MY_IP = '192.168.1.142'
+MY_IP = '10.1.137.218'
 
 connection_to_local = None
 
@@ -31,11 +31,9 @@ def send_packet_node(packet, node_ip, node_port):
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_node:
 
-        node_ip = choose_node()
-
         socket_node.connect((node_ip, node_port))
 
-        print("[INTERFAZ ACTIVA] Paquete enviado a nodo, ip: " + str(node_ip) + ", paquete: ", end='')
+        print("[INTERFAZ ACTIVA] Paquete enviado a nodo, ip: " + node_ip + ", paquete: ", end='')
         print(packet)
         socket_node.sendall(packet)
     
@@ -77,21 +75,27 @@ def receive_packet_node():
 
 
 def enroll_node():
-    socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-    socket_broadcast_node.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    socket_broadcast_node.bind(("", BROADCAST_NODES_PORT))
+    global current_size_nodes
+    global nodes_location
 
+    socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    socket_broadcast_node.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    socket_broadcast_node.bind(("10.1.255.255", BROADCAST_NODES_PORT))
     while True:
         packet, addr = socket_broadcast_node.recvfrom(1024)
-        data = struct.unpack(node_broadcast_builder.FORMAT, packet)
-
+        
+        data = struct.unpack(node_broadcast_builder.FORMAT, packet)     
+        
         # DEBUGGING
-        print('[INTERFAZ ACTIVA] Nodo registrado, ip: ' + addr + ', tamanno: ' + str(data[1]) )
+        print('[INTERFAZ ACTIVA] Nodo registrado, ip: ' + addr[0] + ', tamanno: ' + str(data[1] ) )
 
-        nodes_location[len(nodes_location)] = addr
+        nodes_location[len(nodes_location)] = addr[0]
         current_size_nodes[len(current_size_nodes)] = data[1]
 
-        send_packet_node(distributed_packet_builder.create_ok_broadcast_packet(), addr , BROADCAST_NODES_PORT)        
+        print(nodes_location)
+        print(current_size_nodes)
+
+        send_packet_node(distributed_packet_builder.create_ok_broadcast_packet(), addr[0] , NODES_PORT)
 
 
 # To local memory
