@@ -9,10 +9,8 @@ import socket
 import queue
 import threading
 
-#import packet_builders.local_distributed_packet_builder as local_packet_builder
 import packet_builders.distributed_packet_builder as distributed_packet_builder
 import packet_builders.node_broadcast as node_broadcast
-#import packet_builders.distributed_node_packet_builder as distributed_node_packet_builder
 import packet_builders.node_data_packet_builder as node_data_packet_builder
 import packet_builders.node_ok_packet_builder as node_ok_packet_builder
 import packet_builders.node_DI_packet_builder as node_DI_packet_builder
@@ -28,6 +26,7 @@ data_pos = max_size-1
 metadata_size = 15
 byte_table = [0 for x in range(max_size)]#bytearray(max_size)#" "*max_size
 count_node = 0
+
 
 BC_PORT = 5000
 
@@ -47,9 +46,60 @@ def generate_node_id():
 
 def save_page(op_id, page_id, page_size, data):
     global size_left
-    size_left += page_size
-    add_to_table(op_id, page_id, page_size, data)
-    return size_left
+    global byte_table
+    inTable = False
+    start_index = 0
+    for i in range(0, metadata_pos):
+        if(op_id == byte_table[i] and page_id == byte_table[i+1]):
+            inTable = True
+            start_index = i
+            break
+        i+=20
+    if (inTable):
+        metadata_array = []
+        for i in range(start_index, start_index + 20):
+            metadata_array.append(byte_table[i])
+        asked_metadata = bytearray(metadata_array)
+        processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
+        new_size = abs(processed_metadata[2]-page_size)
+        size_left += new_size
+        modify_content(op_id, page_id, page_size, data, processed_metadata[5])
+    else:
+        size_left += page_size
+        add_to_table(op_id, page_id, page_size, data)
+
+
+def modify_content(op_id, page_id, page_size, data, meta_start):
+    global byte_table
+    modification_date = datetime.now()
+
+    metadata_array = []
+    for i in range(meta_start, meta_start + 20):
+        metadata_array.append(byte_table[i])
+
+    asked_metadata = bytearray(metadata_array)
+    processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
+
+    data_location = processed_metadata[5]
+    print (data_location)
+    mod_date_bytes = int(time.mktime(modification_date.timetuple()))
+
+    new_meta = struct.pack(node_data_packet_builder.FORMAT, op_id, page_id, page_size, processed_metadata[3], mod_date_bytes, data_location)
+    #bytes_data = node_data_packet_builder.create(op_id, page_id, page_size, crea_date_bytes, mod_date_bytes, data_pos)
+    meta_iter = meta_start
+    for meta_byte in new_meta:
+        byte_table[meta_iter] = meta_byte
+        meta_iter += 1
+
+    data_iter = data_location
+    data_bytes = bytearray(data, 'utf-8')
+    for aByte in data_bytes:
+        byte_table[data_iter] = aByte
+        data_iter -= 1
+    print(byte_table)
+    write_to_file()
+
+
 
 def add_to_table(op_id, page_id, page_size, data):
     global metadata_pos
@@ -72,12 +122,16 @@ def add_to_table(op_id, page_id, page_size, data):
     print(byte_table)
     write_to_file()
 
+
+
 def write_to_file():
     output_file = open('file', 'wb')
     array_to_file = bytes(byte_table)
     output_file.write(array_to_file)
     #array_to_file.tofile(output_file)
     output_file.close()
+
+
 
 def read_from_file():
     global byte_table
@@ -87,6 +141,8 @@ def read_from_file():
     byte_table = file_array
     input_file.close()
    
+
+
 def list_files():
     read_from_file()
     for i in range(0, metadata_pos, 20):
@@ -200,8 +256,9 @@ read_from_file()
 add_to_table(1,3,21,"ioueea")
 read_from_file()
 list_files()
-#p = (get_page(1,2))
+modify_content(1,3,22,"qwertyu",20)
 unpacked = struct.unpack(node_DI_packet_builder.get_save_format(5), get_page(1,2))
 print(unpacked[2])
-unpacked2 = struct.unpack(node_DI_packet_builder.get_save_format(6), get_page(1,3))
+unpacked2 = struct.unpack(node_DI_packet_builder.get_save_format(7), get_page(1,3))
 print(unpacked2[2])
+list_files()
