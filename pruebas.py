@@ -17,7 +17,6 @@ def get_hex_mac(mac):
 def main():
 
     """
-
     # MAC en 6 bytes
     mac = uuid.getnode().to_bytes(6, 'big')
     print("MAC en 6 bytes: ", mac)
@@ -84,7 +83,6 @@ def main():
     print("Keep Alive sin paginas y con nodos: ", unpack_paquete)
 
     print()
-
     """
 
     # Pruebas de socket
@@ -102,5 +100,4 @@ def main():
     #os.system("sudo ifconfig eth0 up")
 
     
-
 main()

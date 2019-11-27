@@ -10,9 +10,6 @@ import active_distributed_interface
 import paquete_competir
 import paquete_activa
 
-page_location = {}
-current_size_nodes = {}
-
 # Sirve
 def participantes(sock, cola, end):
     
@@ -159,7 +156,7 @@ def guardar_actualizaciones(datos):
     pagina_id = 3
     nodo_id = pagina_id + 1
     for _ in range(int(datos[1])):
-        page_location[datos[pagina_id]] = datos[nodo_id]
+        active_distributed_interface.page_location[datos[pagina_id]] = datos[nodo_id]
         pagina_id += 2
         nodo_id += 2
 
@@ -170,7 +167,8 @@ def guardar_actualizaciones(datos):
     ip = nodo_id + 1
     espacio_disponible = ip + 1
     for _ in range(int(datos[2])):
-        current_size_nodes[datos[nodo_id]] = [datos[ip], datos[espacio_disponible]]
+        active_distributed_interface.nodes_location[datos[nodo_id]] = datos[ip]
+        active_distributed_interface.current_size_nodes[datos[nodo_id]] = espacio_disponible]
 
     return
 
