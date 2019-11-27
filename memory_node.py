@@ -25,8 +25,8 @@ max_size = 100
 size_left = 0
 metadata_pos = 0
 data_pos = max_size-1
-byte_table = strs = [0 for x in range(max_size)]#bytearray(max_size)#" "*max_size
-page_list = []
+metadata_size = 15
+byte_table = [0 for x in range(max_size)]#bytearray(max_size)#" "*max_size
 count_node = 0
 
 BC_PORT = 5000
@@ -47,13 +47,7 @@ def generate_node_id():
 
 def save_page(op_id, page_id, page_size, data):
     global size_left
-    added_page = PageData()
-    added_page.op_id = op_id
-    added_page.page_id = page_id
-    added_page.page_size = page_size
-    added_page.content = data
-    page_list.append(added_page)
-    size_left += added_page.page_size
+    size_left += page_size
     add_to_table(op_id, page_id, page_size, data)
     return size_left
 
@@ -63,15 +57,11 @@ def add_to_table(op_id, page_id, page_size, data):
     global byte_table
     creation_date = datetime.now()
     modification_date = datetime.now()
-    # Convert the current date to timestamp.  For getting the datetime again: datetime.datetime.fromtimestamp(timestamp)
-    #timestamp = int(time.mktime(current_date.timetuple()))
-    crea_time_bytes = int(time.mktime(creation_date.timetuple()))
+
+    crea_date_bytes = int(time.mktime(creation_date.timetuple()))
     mod_date_bytes = int(time.mktime(modification_date.timetuple()))
     
-    bytes_data = node_data_packet_builder.create(op_id, page_id, page_size, crea_time_bytes, mod_date_bytes, data_pos)
-    print(bytes_data)
-    allThis = struct.unpack(node_data_packet_builder.FORMAT, bytes_data)
-    print(allThis) 
+    bytes_data = node_data_packet_builder.create(op_id, page_id, page_size, crea_date_bytes, mod_date_bytes, data_pos)
     for meta_byte in bytes_data:
         byte_table[metadata_pos] = meta_byte
         metadata_pos += 1
@@ -84,58 +74,56 @@ def add_to_table(op_id, page_id, page_size, data):
 
 def write_to_file():
     output_file = open('file', 'wb')
-    array_to_file = array('B', byte_table)
-    array_to_file.tofile(output_file)
+    array_to_file = bytes(byte_table)
+    output_file.write(array_to_file)
+    #array_to_file.tofile(output_file)
     output_file.close()
 
 def read_from_file():
+    global byte_table
     input_file = open('file', 'rb')
-    #file_array = array('b')
     file_array = array("B")
-    file_array.fromstring(input_file.read())
-    print(file_array)
+    file_array.fromstring(input_file.read())   
     byte_table = file_array
-    print(byte_table)
     input_file.close()
    
+def list_files():
+    read_from_file()
+    for i in range(0, metadata_pos, 20):
+        metadata_array = []
+        for j in range(i, i + 20):
+            metadata_array.append(byte_table[j])
+        asked_metadata = bytearray(metadata_array)
+        processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
+        print("Codigo de operacion: " + str(processed_metadata[0]) + "  "
+        + "Numero de pagina: " + str(processed_metadata[1]) + "  "
+        + "Tamanno de pagina: " + str(processed_metadata[2]) + "  "
+        + "Fecha de creacion:" + str(datetime.fromtimestamp(processed_metadata[3])) + "  "
+        + "Fecha de modificacion:" + str(datetime.fromtimestamp(processed_metadata[4])))
 
-def get_data(op_id, page_id):
+def get_page(op_id, page_id):
     read_from_file()
     for i in range(0, metadata_pos, 20):
         if byte_table[i] == op_id and byte_table[i+1] == page_id:
-            dataArray = []
+            metadata_array = []
             for j in range(i, i + 20):
-                dataArray.append(byte_table[j])
-            print(dataArray)
-            pack = node_data_packet_builder.create(dataArray[0],dataArray[1],dataArray[2],dataArray[3],dataArray[4],dataArray[5])
-            print (pack)
-            print (struct.unpack(node_data_packet_builder.FORMAT, pack))
-            #print(struct.unpack(node_data_packet_builder.FORMAT, byte_table[i+20]))
-            break
+                metadata_array.append(byte_table[j])
+            asked_metadata = bytearray(metadata_array)
+            processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
+            data_size = processed_metadata[2]-metadata_size
+            data_array = []
+            for k in range(0, data_size):
+                data_array.append(byte_table[processed_metadata[5]-k])
+            processed_data = bytes(data_array)
+            node_DI_packet_builder.get_save_format(data_size)
+            #print (node_DI_packet_builder.FORMAT)
+            packet_to_send = struct.pack(node_DI_packet_builder.get_save_format(data_size), processed_metadata[0], processed_metadata[1], processed_data)
+            return (packet_to_send)
+            
 
 def send_data(op_id, page_id):
-    data = node_DI_packet_builder.create(op_id, page_id, 30, "testingYes")
+    data = node_DI_packet_builder.create(op_id, page_id, "testingYes")
     return data
-
-def get_page_content(op_id, page_id):
-    for page in page_list:
-        if(page.page_id == id and page.op_id == op_id):
-            return page
-
-def get_page_size(op_id, page_id):
-    for page in page_list:
-        if(page.page_id == id and page.op_id == op_id):
-            return page.size_left
-    return
-
-class PageData():
-    def __init__(self, *args, **kwargs):
-        self.op_id = ' '
-        self.page_id = 0
-        self.page_size = 0
-        self.content = []
-        self.date_birth = datetime.now()
-        self.date_modification = datetime.now()
 
 def send_size(broadcast_queue_packets):
     global size_left
@@ -178,8 +166,9 @@ def listen_interface(waiting_queue_packets):
                 data = conn.recv(1024)
                 initial_values = struct.unpack_from('=BB', data, 1)
                 if(initial_values[0] == 0):
-                    new_data = struct.unpack(distributed_packet_builder.get_save_format , data)
+                    new_data = struct.unpack(distributed_packet_builder.get_save_format(3) , data)
                     waiting_queue_packets.put(new_data[0],new_data[1],new_data[2],new_data[3]) 
+                    save_page(new_data[0],new_data[1],new_data[2],new_data[3])
                     ok = node_ok_packet_builder.create(initial_values[0], initial_values[1], size_left)
                     s.sendall(ok)
                 if(initial_values[0] == 1):
@@ -187,7 +176,7 @@ def listen_interface(waiting_queue_packets):
                     #waiting_queue_packets.put(new_data[0],new_data[1],new_data[2],new_data[3])
                     send_data(initial_values[0],initial_values[1])
                     #ok = node_ok_packet_builder.create(initial_values[0], initial_values[1], size_left)
-                    s.sendall(send_data(initial_values[0], initial_values[1]))
+                    s.sendall(get_page(initial_values[0], initial_values[1]))
 
 def main():
     broadcast_queue_packets = queue.Queue()
@@ -206,4 +195,13 @@ def main():
     save_queue_process.join()
     save_broadcast_process.join() 
 
-main()
+add_to_table(1,2,20,"oomad")
+read_from_file()
+add_to_table(1,3,21,"ioueea")
+read_from_file()
+list_files()
+#p = (get_page(1,2))
+unpacked = struct.unpack(node_DI_packet_builder.get_save_format(5), get_page(1,2))
+print(unpacked[2])
+unpacked2 = struct.unpack(node_DI_packet_builder.get_save_format(6), get_page(1,3))
+print(unpacked2[2])
