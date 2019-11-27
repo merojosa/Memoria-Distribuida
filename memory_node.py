@@ -20,15 +20,15 @@ from enum_operation_code import Operation_Code
 active_interface_ip = ''
 node_id = 0
 max_size = 100
-size_left = 0
+size_left = 100
 metadata_pos = 0
 data_pos = max_size-1
-metadata_size = 15
+metadata_size = 18
 byte_table = [0 for x in range(max_size)]#bytearray(max_size)#" "*max_size
 count_node = 0
 
 
-BC_PORT = 5000
+BC_PORT = 2222
 
 ID_PORT = 2000
 
@@ -54,10 +54,10 @@ def save_page(op_id, page_id, page_size, data):
             inTable = True
             start_index = i
             break
-        i+=20
+        i+=metadata_size
     if (inTable):
         metadata_array = []
-        for i in range(start_index, start_index + 20):
+        for i in range(start_index, start_index + metadata_size):
             metadata_array.append(byte_table[i])
         asked_metadata = bytearray(metadata_array)
         processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
@@ -74,7 +74,7 @@ def modify_content(op_id, page_id, page_size, data, meta_start):
     modification_date = datetime.now()
 
     metadata_array = []
-    for i in range(meta_start, meta_start + 20):
+    for i in range(meta_start, meta_start + metadata_size):
         metadata_array.append(byte_table[i])
 
     asked_metadata = bytearray(metadata_array)
@@ -145,9 +145,9 @@ def read_from_file():
 
 def list_files():
     read_from_file()
-    for i in range(0, metadata_pos, 20):
+    for i in range(0, metadata_pos, metadata_size):
         metadata_array = []
-        for j in range(i, i + 20):
+        for j in range(i, i + metadata_size):
             metadata_array.append(byte_table[j])
         asked_metadata = bytearray(metadata_array)
         processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
@@ -159,14 +159,14 @@ def list_files():
 
 def get_page(op_id, page_id):
     read_from_file()
-    for i in range(0, metadata_pos, 20):
+    for i in range(0, metadata_pos, metadata_size):
         if byte_table[i] == op_id and byte_table[i+1] == page_id:
             metadata_array = []
-            for j in range(i, i + 20):
+            for j in range(i, i + metadata_size):
                 metadata_array.append(byte_table[j])
             asked_metadata = bytearray(metadata_array)
             processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
-            data_size = processed_metadata[2]-metadata_size
+            data_size = processed_metadata[2]
             data_array = []
             for k in range(0, data_size):
                 data_array.append(byte_table[processed_metadata[5]-k])
@@ -185,11 +185,13 @@ def send_size(broadcast_queue_packets):
     global size_left
     my_broadcast  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     my_broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-       
+    
     while True:
         size_packet = node_broadcast.create(1 , size_left)
-        my_broadcast.sendto(size_packet, ('<broadcast>', BC_PORT))
-        print("size sent")
+        print(size_left)
+        print(size_packet)
+        my_broadcast.sendto(size_packet, ('10.1.255.255', BC_PORT))
+        print("enviado")
         time.sleep(2)
         if not broadcast_queue_packets.empty():
             break
@@ -200,7 +202,8 @@ def send_size(broadcast_queue_packets):
 def broadcast_recieve(broadcast_queue_packets):
     client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
     client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    client.bind(("192.168.1.0", BC_PORT))
+    print("jejeje")
+    client.bind(("10.1.137.45 ", 3114))
     while True:
         data, addr = client.recvfrom(1024)
         broadcast_queue_packets.put(data)
@@ -211,54 +214,54 @@ def broadcast_recieve(broadcast_queue_packets):
             break
 
 
-def listen_interface(waiting_queue_packets):
+def listen_interface(waiting_queue_packets, ok_queue):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("",ID_PORT))
+        s.bind(("",3114))
         s.listen()
         while True:
             conn, addr = s.accept()
             with conn:
                 print('Connected by', addr)
                 data = conn.recv(1024)
-                initial_values = struct.unpack_from('=BB', data, 1)
+                print(data)
+                initial_values = struct.unpack_from('=B', data)
+                print(initial_values[0])
+                if(initial_values[0 == 2]):
+                    ok_queue.put(initial_values[0])
                 if(initial_values[0] == 0):
-                    new_data = struct.unpack(distributed_packet_builder.get_save_format(3) , data)
+                    size_array = struct.unpack_from("=BBI", data)
+                    print(size_array[2])
+                    print(distributed_packet_builder.get_save_format(size_array[2]))
+                    new_data = struct.unpack(distributed_packet_builder.get_save_format(size_array[2]) , data)
+
                     waiting_queue_packets.put(new_data[0],new_data[1],new_data[2],new_data[3]) 
                     save_page(new_data[0],new_data[1],new_data[2],new_data[3])
                     ok = node_ok_packet_builder.create(initial_values[0], initial_values[1], size_left)
                     s.sendall(ok)
                 if(initial_values[0] == 1):
+                    ok_data = struct.unpack(distributed_packet_builder.create_ok_local_packet , data)
                     #new_data = struct.unpack(distributed_packet_builder.INITIAL_FORMAT , data)
                     #waiting_queue_packets.put(new_data[0],new_data[1],new_data[2],new_data[3])
-                    send_data(initial_values[0],initial_values[1])
+                    send_data(ok_data[0],ok_data[1])
                     #ok = node_ok_packet_builder.create(initial_values[0], initial_values[1], size_left)
-                    s.sendall(get_page(initial_values[0], initial_values[1]))
+                    s.sendall(get_page(ok_data[0], ok_data[1]))
 
 def main():
     broadcast_queue_packets = queue.Queue()
     save_queue_packets = queue.Queue()
+    ok_queue = queue.Queue()
 
-    save_queue_process = threading.Thread(target=listen_interface, args=(save_queue_packets,))
-    save_broadcast_process = threading.Thread(target=broadcast_recieve, args=(broadcast_queue_packets,))
-    send_broadcast_process = threading.Thread(target=send_size, args=(broadcast_queue_packets,))
-    sub_send_process = threading.Thread(target=send_size, args=(broadcast_queue_packets,))
+    save_queue_process = threading.Thread(target=listen_interface, args=(save_queue_packets, ok_queue,))
+    #save_broadcast_process = threading.Thread(target=broadcast_recieve, args=(broadcast_queue_packets,))
+    send_broadcast_process = threading.Thread(target=send_size, args=(ok_queue,))
+    #sub_send_process = threading.Thread(target=send_size, args=(broadcast_queue_packets,))
 
     send_broadcast_process.start()
     save_queue_process.start()
-    save_broadcast_process.start()
+    #save_broadcast_process.start()
 
     send_broadcast_process.join()
     save_queue_process.join()
-    save_broadcast_process.join() 
+    #save_broadcast_process.join() 
 
-add_to_table(1,2,20,"oomad")
-read_from_file()
-add_to_table(1,3,21,"ioueea")
-read_from_file()
-list_files()
-modify_content(1,3,22,"qwertyu",20)
-unpacked = struct.unpack(node_DI_packet_builder.get_save_format(5), get_page(1,2))
-print(unpacked[2])
-unpacked2 = struct.unpack(node_DI_packet_builder.get_save_format(7), get_page(1,3))
-print(unpacked2[2])
-list_files()
+main()
