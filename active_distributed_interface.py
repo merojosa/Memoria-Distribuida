@@ -8,8 +8,8 @@ import packet_builders.distributed_packet_builder as distributed_packet_builder
 import packet_builders.node_ok_packet_builder as node_ok_packet_builder
 from enum_operation_code import Operation_Code
 
-NODES_PORT = 4003
-BROADCAST_NODES_PORT = 2224
+NODES_PORT = 4004
+BROADCAST_NODES_PORT = 2225
 
 # page id - node id
 page_location = {}
@@ -21,7 +21,7 @@ nodes_location = {}
 current_size_nodes = {}
 
 
-LOCAL_PORT = 2011
+LOCAL_PORT = 2012
 MY_IP = '10.1.137.218'
 
 connection_to_local = None
@@ -132,9 +132,9 @@ def process_local_packet(local_packet_queue):
             answer_packet = struct.unpack(node_ok_packet_builder.FORMAT, answer)
 
             # Create an ok packet with given page id and send it to local
-            send_packet_local(distributed_packet_builder.create_ok_local_packet(answer_packet[1])
+            send_packet_local(distributed_packet_builder.create_ok_local_packet(answer_packet[1]))
+        elif(operation_code == Operation_Code.READ.value):
 
-        elif(operation_code == Operation_Code.READ.value):  
             # Where is the page?
             page_id = struct.unpack(distributed_packet_builder.INITIAL_FORMAT, packet)[1]
             node_id = page_location[page_id]
