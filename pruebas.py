@@ -1,6 +1,5 @@
 import paquete_competir
 import paquete_activa
-import ID_ID
 
 import uuid
 import socket
@@ -83,7 +82,6 @@ def main():
     print("Keep Alive sin paginas y con nodos: ", unpack_paquete)
 
     print()
-    """
 
     # Pruebas de socket
     UDP_IP = '192.168.1.255'
@@ -94,10 +92,27 @@ def main():
     sock.bind((UDP_IP, UDP_PORT))
     print(ID_ID.champions(sock, 0))
     
-    #os.system("sudo ifconfig eth0 down")
-    #os.system("sudo ifconfig eth0 10.1.138.199")
-    #os.system("sudo ifconfig wlan0 192.168.1.199")
-    #os.system("sudo ifconfig eth0 up")
-
+    """
+    nodes_location = {}
+    nodes_location[1] = 2
+    nodes_location[3] = 4
+    nodes_location[5] = 6
+    current_size_nodes = {}
+    current_size_nodes[1] = "a"
+    current_size_nodes[3] = "b"
+    current_size_nodes[5] = "c"
+    
+    lista = []
+    
+    print(len(nodes_location))
+    
+    for i in nodes_location.keys():
+        lista.append(i)
+        lista.append(nodes_location[i])
+        lista.append(current_size_nodes[i])
+    
+    print(lista)
+    
+    
     
 main()

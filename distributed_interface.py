@@ -6,11 +6,51 @@ import queue
 import threading
 
 import active_distributed_interface
-
 import paquete_competir
 import paquete_activa
 
-# Sirve
+UDP_IP = '10.164.71.255'
+UDP_PORT = 6666
+
+def tiempo_extra(sock):
+    
+    timeout = 1
+    campeon = True
+    
+    while True:
+        sock.settimeout(timeout)
+        
+        try:
+            paquete_recv, addrs = sock.recvfrom(1024)
+            
+            if int(paquete_recv[0]) == 1: 
+                datos = paquete_competir.desempaquetar(paquete_recv)
+                datos_mac = datos[1]
+                
+                if mac == datos_mac:
+                    print("Descartando mi propio paquete")
+                    continue
+                    
+                elif datos_mac > mac:
+                    print("Perdi la champions en tiempo extra")
+                    guardar_actualizaciones(paquete_activa.desempaquetar(paquete_recv))
+                    campeon = False
+                    break
+                    
+                else:
+                    print("Gane la champions en tiempo extra")
+                    paquete = paquete_dump_total()
+                    sock.sendto(paquete, (UDP_IP, UDP_PORT))
+                    break
+        
+        except socket.timeout:
+            paquete = paquete_dump_total()
+            sock.sendto(paquete, (UDP_IP, UDP_PORT))
+            break  
+            
+    return campeon
+
+
 def participantes(sock, cola, end):
     
     timeout = 1
@@ -20,16 +60,14 @@ def participantes(sock, cola, end):
         
         try:
             paquete_recv, addrs = sock.recvfrom(1024)
-            print(addrs)
             cola.put(paquete_recv)
         
         except socket.timeout:
             if end.empty() == False:
-                break
-                
+                break        
     return
 
-# Sirve
+
 def champions(sock, ronda):
     
     cola = queue.Queue()
@@ -44,7 +82,7 @@ def champions(sock, ronda):
     sorteo_process.start()
 
     paquete = paquete_competir.crear(ronda)
-    sock.sendto(paquete, ('<broadcast>', 6666))
+    sock.sendto(paquete, (UDP_IP, UDP_PORT))
     
     start_time = time.time()
 
@@ -52,10 +90,8 @@ def champions(sock, ronda):
 
         try:
             paquete_recv = cola.get(timeout=timeout1)
-            print(paquete_recv)
 
             if int(paquete_recv[0]) == 0:
-                
                 datos = paquete_competir.desempaquetar(paquete_recv)
                 datos_op_code = int(datos[0])
                 datos_mac = datos[1]
@@ -64,19 +100,20 @@ def champions(sock, ronda):
                 if mac == datos_mac:
                     print("Descartando mi propio paquete")
                     continue
+                    
                 elif (datos_ronda > ronda) or (datos_mac > mac):
                     print("Perdi la champions")
                     salir = True
                     end.put(True)
                     break
+                    
                 elif (datos_ronda < ronda):
                     print("Avanzando a la ronda: ", ronda)
                     ronda += 1
                     paquete = paquete_competir.crear(ronda)
-                    sock.sendto(paquete, ('<broadcast>', 6666))
+                    sock.sendto(paquete, (UDP_IP, UDP_PORT))
 
             elif int(paquete_recv[0]) == 1:
-                print(paquete_recv)
                 guardar_actualizaciones(paquete_activa.desempaquetar(paquete_recv))
                 salir = True
                 end.put(True)
@@ -84,16 +121,19 @@ def champions(sock, ronda):
                 break
 
             timeout1 = int(timeout1 - (time.time() - start_time))
-            print(timeout1)
             if timeout1 <= 0:
-                print("Gane la champions")
+                print("Gane la champions sin tiempo extra")
+                paquete = paquete_dump_total()
+                sock.sendto(paquete, (UDP_IP, UDP_PORT))
                 campeon = True
                 salir = True
                 end.put(True)
                 break
 
         except queue.Empty:
-            print("Gane la champions")
+            print("Gane la champions sin tiempo extra")
+            paquete = paquete_dump_total()
+            sock.sendto(paquete, (UDP_IP, UDP_PORT))
             campeon = True
             salir = True
             end.put(True)
@@ -103,9 +143,27 @@ def champions(sock, ronda):
             break
             
     sorteo_process.join()
-
+    
     return campeon
 
+def paquete_dump_total():
+    numero_paginas = len(active_distributed_interface.page_location)
+    numero_nodos = len(active_distributed_interface.nodes_location)
+    lista_paginas = []
+    lista_nodos = []
+    
+    for i in active_distributed_interface.page_location.keys():
+        lista_paginas.append(i)
+        lista_paginas.append(active_distributed_interface.page_location[i])
+    
+    for i in active_distributed_interface.nodes_location.keys():
+        lista_nodos.append(i)
+        lista_nodos.append(active_distributed_interface.nodes_location[i])
+        lista_nodos.append(active_distributed_interface.current_size_nodes[i])
+        
+    return paquete_activa.crear(op_code=1, numero_paginas=numero_paginas, numero_nodos=numero_nodos, lista_paginas, lista_nodos)
+    
+    
 # No sirve
 def recibir_actualizaciones(sock, cola):
     keep_alive_timeout = 4
@@ -174,10 +232,7 @@ def guardar_actualizaciones(datos):
 
 
 def start():
-    UDP_IP = ""
-    UDP_PORT = 6666
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.bind((UDP_IP, UDP_PORT))
 
@@ -190,9 +245,14 @@ def start():
         resultado = champions(sock, ronda)
 
         if resultado == True:
-            paquete = paquete_activa.crear(op_code=1, numero_paginas=0, numero_nodos=0)
-            sock.sendto(paquete, ('<broadcast>', 6666))
-            active_distributed_interface.execute()
+            resultado = tiempo_extra(sock)
+            
+            if resultado == True:
+                # Falta la IP fija
+                # os.system("sudo ifconfig eth0 down")
+                # os.system("sudo ifconfig eth0 AQUI LA IP FIJA")
+                # os.system("sudo ifconfig eth0 up")
+                active_distributed_interface.execute()
         else:
 
             receive_packet_process = threading.Thread(target=recibir_actualizaciones, args=(sock, paquetes_pasivos,))
