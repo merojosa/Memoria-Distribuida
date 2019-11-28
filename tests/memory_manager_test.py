@@ -17,12 +17,12 @@ def send_packet_interface():
     memory_manager.swap_from_primary_to_secondary(id2)
     memory_manager.swap_from_primary_to_secondary(id1)
 
-  #  data = memory_manager.get_page_data(id2)
+    data = memory_manager.get_page_data(id2)
 
     print('send_packet_interface OK')
 
-  #  print("Datos obtenidos ", end="")
-  #  print(data)
+    print("Datos obtenidos ", end="")
+    print(data)
 
 
 send_packet_interface()

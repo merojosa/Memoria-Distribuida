@@ -18,7 +18,7 @@ FLOAT_SIZE = 4
 PAGE_SIZE = 12
 MAX_PAGES = 4
 
-INTERFACE_PORT = 2031
+INTERFACE_PORT = 2040
 INTERFACE_IP = '10.1.137.218'
 
 # When a page is created, it's located in primary memory. Return the new page id.
