@@ -8,8 +8,8 @@ import packet_builders.distributed_packet_builder as distributed_packet_builder
 import packet_builders.node_ok_packet_builder as node_ok_packet_builder
 from enum_operation_code import Operation_Code
 
-NODES_PORT = 3124
-BROADCAST_NODES_PORT = 5010
+NODES_PORT = 3133
+BROADCAST_NODES_PORT = 5019
 
 # page id - node id
 page_location = {}
@@ -21,7 +21,7 @@ nodes_location = {}
 current_size_nodes = {}
 
 
-LOCAL_PORT = 2020
+LOCAL_PORT = 2040
 MY_IP = '10.1.137.218'
 
 connection_to_local = None
@@ -106,30 +106,34 @@ def receive_local_packet(local_packet_queue):
                 print("[INTERFAZ ACTIVA] Paquete recibido desde ML, paquete: ", end='')
                 print(data)
                 local_packet_queue.put(data)
-# Returns ip
+# Returns id
 def choose_node():
     biggest_size = -1
-    big_ip = None
+    big_id = None
 
     for node_id in current_size_nodes:
 
         if(current_size_nodes[node_id] > biggest_size):
             biggest_size = current_size_nodes[node_id]
-            big_ip = nodes_location[node_id]
+            big_id = node_id
 
-    return big_ip
+    return big_id
 
 def process_local_packet(local_packet_queue):
     while True:
 
         packet = local_packet_queue.get()
         operation_code = struct.unpack_from('B', packet)[0]
+        page_id = struct.unpack_from('BB', packet)[1]
 
         if(operation_code == Operation_Code.SAVE.value):
             # No need to process, is the same packet that needs to be sent
-            answer = send_packet_node_wait_answer(packet, choose_node(), NODES_PORT)
+            node_id = choose_node()
+            answer = send_packet_node_wait_answer(packet, nodes_location[node_id], NODES_PORT)
             print("[INTERFAZ ACTIVA] Paquete recibido desde NM con SAVE ", end="")
             print(answer)
+
+            page_location[page_id] = node_id
 
             answer_packet = struct.unpack(node_ok_packet_builder.FORMAT, answer)
 
@@ -139,7 +143,7 @@ def process_local_packet(local_packet_queue):
 
             # Where is the page?
             page_id = struct.unpack(distributed_packet_builder.INITIAL_FORMAT, packet)[1]
-            node_id = page_location[page_id]
+            node_id = page_location[page_id]    #AQUI PASA ALGO
             answer = send_packet_node_wait_answer(packet, nodes_location[node_id], NODES_PORT)
             
             print("[INTERFAZ ACTIVA] Paquete recibido desde NM con READ ", end="")
