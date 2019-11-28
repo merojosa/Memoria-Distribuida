@@ -160,25 +160,23 @@ def read_from_file():
     global metadata_pos
     global data_pos
     
-    metadata_arr = []
-    data_arr = []
-    
-    input_file = open('file', 'rb')
-    file_array = array("B")
-    file_array.fromstring(input_file.read())   
-    byte_table = file_array
-    input_file.close()
+    try:
+        input_file = open('file', 'rb')
+        file_array = array("B")
+        file_array.fromstring(input_file.read())   
+        byte_table = file_array
+        input_file.close()
+    except ValueError:
+        print("se creo va a crear nuevo archivo")
 
-    meta_pos_bytes = []
-    data_pos_bytes = [] 
-    for i in range(0,4):
-        meta_pos_bytes.append(byte_table[i])
-        data_pos_bytes.append(byte_table[i+4])
-    metadata_pos = int.from_bytes(meta_pos_bytes, 'big')
-    data_pos = int.from_bytes(data_pos_bytes, 'big')
-
-#def clear_file():
-
+        meta_pos_bytes = []
+        data_pos_bytes = [] 
+        for i in range(0,4):
+            meta_pos_bytes.append(byte_table[i])
+            data_pos_bytes.append(byte_table[i+4])
+        metadata_pos = int.from_bytes(meta_pos_bytes, 'big')
+        data_pos = int.from_bytes(data_pos_bytes, 'big')
+        print(byte_table)
 
 def list_files():
     while True:
@@ -201,11 +199,11 @@ def list_files():
 
 def get_page(op_id, page_id):
     read_from_file()
-    num = 8
-    for i in range(num, metadata_pos, metadata_size):
+    begin_meta = 8
+    for i in range(begin_meta, metadata_pos, metadata_size):
         print(byte_table[i])
         print(byte_table[i+1])
-        if byte_table[i] == op_id and byte_table[i+1] == page_id:
+        if byte_table[i+1] == page_id:
             metadata_array = []
             print (i)
             for j in range(i, i + metadata_size):
@@ -313,4 +311,3 @@ def main():
     listing_process.join()
 
 main()
-
