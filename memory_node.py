@@ -44,6 +44,7 @@ def generate_node_id():
 
 def save_page(recieved_queue):
     packet = recieved_queue.get()
+    print("packffff")
     print(packet)
     op_id = packet[0]
     page_id = packet[1]
@@ -54,14 +55,14 @@ def save_page(recieved_queue):
     inTable = False
     start_index = 0
 
-    for i in range(8, metadata_pos):
+    for i in range(8, metadata_pos, metadata_size):
         print(metadata_pos)
         if(op_id == byte_table[i] and page_id == byte_table[i+1]):
             print("f")
             inTable = True
             start_index = i
+            print("sta index", start_index)
             break
-        i+=metadata_size
     if (inTable):
         metadata_array = []
         for i in range(start_index, start_index + metadata_size):
@@ -79,13 +80,16 @@ def save_page(recieved_queue):
 def modify_content(op_id, page_id, page_size, data, meta_start):
     global byte_table
     modification_date = datetime.now()
-
+    print(byte_table)
     metadata_array = []
     for i in range(meta_start, meta_start + metadata_size):
         metadata_array.append(byte_table[i])
 
     asked_metadata = bytearray(metadata_array)
+    print("ask meta", asked_metadata)
     processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
+
+    print("processed metadata ", processed_metadata)
 
     data_location = processed_metadata[5]
     mod_date_bytes = int(time.mktime(modification_date.timetuple()))
@@ -231,7 +235,10 @@ def send_size(broadcast_queue_packets):
     my_broadcast  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     my_broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     
-    read_from_file()
+    #try:
+     #   read_from_file()
+    #except ValueError:
+    #    print("No se pudo leer archivo")
     while True:
         if not broadcast_queue_packets.empty():
             break
