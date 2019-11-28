@@ -114,13 +114,20 @@ def get_page_data(page_id):
         socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
 
         packet = local_packet_builder.create_read_packet(Operation_Code.READ, page_id)
-        socket_interface.sendall(packet)                # Ask for the page.
-        packet_received = socket_interface.recv(1024)   # Wait for answer.
-        socket_interface.close()
+        
+        packet_received = send_packet_interface(packet)
 
         data = struct.unpack(local_packet_builder.INITIAL_FORMAT + str(PAGE_SIZE) + 's', packet_received)
         # Return content
         return convert_string_to_list(data[2])
+
+def send_packet_interface(packet):
+    global socket_interface
+
+    socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
+    socket_interface.sendall(packet)
+    answer = packet_distributed = socket_interface.recv(1024)
+    return answer
 
 
 def get_pages(page_id_list):
@@ -154,13 +161,12 @@ def save_page(page_id):
 
     while True:
         try:
-            socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
-            socket_interface.sendall(packet)
+            answer = send_packet_interface(packet)
             print("[MEMORIA LOCAL] Paquete enviado a ID, ip: " + INTERFACE_IP, end='')
             print(packet)
-            packet_distributed = socket_interface.recv(1024)
+            
             print("[MEMORIA LOCAL] Respuesta de ID, paquete: ", end='')
-            print(packet_distributed)
+            print(answer)
             socket_interface.close()
             break
         except socket.error:

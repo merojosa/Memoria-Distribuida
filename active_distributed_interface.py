@@ -8,8 +8,8 @@ import packet_builders.distributed_packet_builder as distributed_packet_builder
 import packet_builders.node_ok_packet_builder as node_ok_packet_builder
 from enum_operation_code import Operation_Code
 
-NODES_PORT = 3117
-BROADCAST_NODES_PORT = 5003
+NODES_PORT = 3124
+BROADCAST_NODES_PORT = 5010
 
 # page id - node id
 page_location = {}
@@ -21,7 +21,7 @@ nodes_location = {}
 current_size_nodes = {}
 
 
-LOCAL_PORT = 2012
+LOCAL_PORT = 2020
 MY_IP = '10.1.137.218'
 
 connection_to_local = None
@@ -128,7 +128,7 @@ def process_local_packet(local_packet_queue):
         if(operation_code == Operation_Code.SAVE.value):
             # No need to process, is the same packet that needs to be sent
             answer = send_packet_node_wait_answer(packet, choose_node(), NODES_PORT)
-            print("[INTERFAZ ACTIVA] Paquete recibido desde NM ", end="")
+            print("[INTERFAZ ACTIVA] Paquete recibido desde NM con SAVE ", end="")
             print(answer)
 
             answer_packet = struct.unpack(node_ok_packet_builder.FORMAT, answer)
@@ -142,7 +142,7 @@ def process_local_packet(local_packet_queue):
             node_id = page_location[page_id]
             answer = send_packet_node_wait_answer(packet, nodes_location[node_id], NODES_PORT)
             
-            print("[INTERFAZ ACTIVA] Paquete recibido desde NM ", end="")
+            print("[INTERFAZ ACTIVA] Paquete recibido desde NM con READ ", end="")
             print(answer)
             send_packet_local(answer)
 
