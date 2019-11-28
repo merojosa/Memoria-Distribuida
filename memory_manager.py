@@ -18,10 +18,8 @@ FLOAT_SIZE = 4
 PAGE_SIZE = 12
 MAX_PAGES = 4
 
-INTERFACE_PORT = 2000
-INTERFACE_IP = '127.0.0.1'
-
-socket_interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+INTERFACE_PORT = 2040
+INTERFACE_IP = '10.1.137.218'
 
 # When a page is created, it's located in primary memory. Return the new page id.
 def create_page():
@@ -106,15 +104,13 @@ def write_primary(page_id, data, size):
 def get_page_data(page_id):
     global pages
     global page_location
-    global socket_interface
 
     if(page_location[page_id] == Page_Location.PRIMARY.value):
         return pages[page_id].content
     else:
-        socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
 
-        packet = local_packet_builder.create_read_packet(Operation_Code.READ, page_id)
-        
+        packet = local_packet_builder.create_read_packet(Operation_Code.READ.value, int(page_id, 16))
+
         packet_received = send_packet_interface(packet)
 
         data = struct.unpack(local_packet_builder.INITIAL_FORMAT + str(PAGE_SIZE) + 's', packet_received)
@@ -122,11 +118,16 @@ def get_page_data(page_id):
         return convert_string_to_list(data[2])
 
 def send_packet_interface(packet):
-    global socket_interface
+    socket_interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
     socket_interface.sendall(packet)
-    answer = packet_distributed = socket_interface.recv(1024)
+
+    print("[MEMORIA LOCAL] Paquete enviado a ID, ip: " + INTERFACE_IP, end='')
+    print(packet)
+
+    answer = socket_interface.recv(1024)
+    socket_interface.close()
     return answer
 
 
@@ -154,25 +155,13 @@ def swap_old_page():
 
 # To interface distributed
 def save_page(page_id):
-    global socket_interface
 
     data_string = convert_list_to_string(pages[page_id].content).encode()
     packet = local_packet_builder.create_save_packet(operation_code=Operation_Code.SAVE.value, page_id=int(page_id, 16), data_size=PAGE_SIZE, data=data_string)
 
-    while True:
-        try:
-            answer = send_packet_interface(packet)
-            print("[MEMORIA LOCAL] Paquete enviado a ID, ip: " + INTERFACE_IP, end='')
-            print(packet)
-            
-            print("[MEMORIA LOCAL] Respuesta de ID, paquete: ", end='')
-            print(answer)
-            socket_interface.close()
-            break
-        except socket.error:
-            print("[MEMORIA LOCAL] No se puede enviar el paquete a ID, ip: " + INTERFACE_IP  + ", intentando en 2 segundos.")
-            time.sleep(2)
-            continue
+    answer = send_packet_interface(packet)
+    print("[MEMORIA LOCAL] Respuesta de ID, paquete: ", end='')
+    print(answer)
 
 
 def convert_list_to_string(list):
