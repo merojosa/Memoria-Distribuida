@@ -106,14 +106,12 @@ def write_primary(page_id, data, size):
 def get_page_data(page_id):
     global pages
     global page_location
-    global socket_interface
 
     if(page_location[page_id] == Page_Location.PRIMARY.value):
         return pages[page_id].content
     else:
-        socket_interface.connect((INTERFACE_IP, INTERFACE_PORT))
 
-        packet = local_packet_builder.create_read_packet(Operation_Code.READ, page_id)
+        packet = local_packet_builder.create_read_packet(Operation_Code.READ.value, int(page_id, 16))
         
         packet_received = send_packet_interface(packet)
 
