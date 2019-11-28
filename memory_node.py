@@ -162,21 +162,22 @@ def read_from_file():
     
     try:
         input_file = open('file', 'rb')
-        file_array = array("B")
-        file_array.fromstring(input_file.read())   
-        byte_table = file_array
-        input_file.close()
-    except ValueError:
-        print("se creo va a crear nuevo archivo")
-
-        meta_pos_bytes = []
-        data_pos_bytes = [] 
-        for i in range(0,4):
-            meta_pos_bytes.append(byte_table[i])
-            data_pos_bytes.append(byte_table[i+4])
-        metadata_pos = int.from_bytes(meta_pos_bytes, 'big')
-        data_pos = int.from_bytes(data_pos_bytes, 'big')
-        print(byte_table)
+        try:
+            file_array = array("B")
+            file_array.fromstring(input_file.read())   
+            byte_table = file_array
+            meta_pos_bytes = []
+            data_pos_bytes = [] 
+            for i in range(0,4):
+                meta_pos_bytes.append(byte_table[i])
+                data_pos_bytes.append(byte_table[i+4])
+            metadata_pos = int.from_bytes(meta_pos_bytes, 'big')
+            data_pos = int.from_bytes(data_pos_bytes, 'big')
+            print(byte_table)
+        finally:
+            input_file.close()
+    except:
+        print("File not found")
 
 def list_files():
     while True:
@@ -233,11 +234,7 @@ def send_size(broadcast_queue_packets):
     global byte_table
     my_broadcast  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     my_broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    
-    #try:
-     #   read_from_file()
-    #except ValueError:
-    #    print("No se pudo leer archivo")
+    read_from_file()
     while True:
         if not broadcast_queue_packets.empty():
             break
