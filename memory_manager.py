@@ -113,9 +113,15 @@ def get_page_data(page_id):
 
         packet_received = send_packet_interface(packet)
 
+        print("paquete recivido", packet_received)
+        print("formato", local_packet_builder.INITIAL_FORMAT + str(PAGE_SIZE) + 's')
+
         data = struct.unpack(local_packet_builder.INITIAL_FORMAT + str(PAGE_SIZE) + 's', packet_received)
+        print("paquete data", data)
+
         # Return content
-        return convert_string_to_list(data[2]) # NO ESTOY SEGURO, PERO CREO QUE SI PONGO data[2].decode, todo funciona como lo esperado.
+        content = data[2].decode()
+        return convert_string_to_list(content)
 
 def send_packet_interface(packet):
     socket_interface = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
