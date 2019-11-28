@@ -18,8 +18,8 @@ FLOAT_SIZE = 4
 PAGE_SIZE = 12
 MAX_PAGES = 4
 
-INTERFACE_PORT = 2040
-INTERFACE_IP = '10.1.137.218'
+INTERFACE_PORT = 2000
+INTERFACE_IP = '10.1.138.168'
 
 # When a page is created, it's located in primary memory. Return the new page id.
 def create_page():
@@ -69,7 +69,8 @@ def write(page_id, data_interface):
 def swap_from_primary_to_secondary(page_id):
     global pages
     global page_location
-
+    
+    print("Swapping " + page_id)
     save_page(page_id)
     del pages[page_id]
     page_location[page_id] = Page_Location.SECONDARY.value

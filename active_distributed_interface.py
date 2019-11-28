@@ -8,8 +8,8 @@ import packet_builders.distributed_packet_builder as distributed_packet_builder
 import packet_builders.node_ok_packet_builder as node_ok_packet_builder
 from enum_operation_code import Operation_Code
 
-NODES_PORT = 3133
-BROADCAST_NODES_PORT = 5019
+NODES_PORT = 3114
+BROADCAST_NODES_PORT = 5000
 
 # page id - node id
 page_location = {}
@@ -21,8 +21,8 @@ nodes_location = {}
 current_size_nodes = {}
 
 
-LOCAL_PORT = 2040
-MY_IP = '10.1.137.218'
+LOCAL_PORT = 2002
+MY_IP = '10.1.138.168'
 
 connection_to_local = None
 
@@ -31,9 +31,10 @@ connection_to_local = None
 def send_packet_node_no_answer(packet, node_ip, node_port):
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_node:
-
+        
+        socket_node.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         socket_node.connect((node_ip, node_port))
-
+     
         print("[INTERFAZ ACTIVA] Paquete enviado a nodo, ip: " + node_ip + ", paquete: ", end='')
         print(packet)
         socket_node.sendall(packet)
@@ -42,7 +43,7 @@ def send_packet_node_no_answer(packet, node_ip, node_port):
 def send_packet_node_wait_answer(packet, node_ip, node_port):
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_node:
-
+        socket_node.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         socket_node.connect((node_ip, node_port))
 
         print("[INTERFAZ ACTIVA] Paquete enviado a nodo, ip: " + node_ip + ", paquete: ", end='')
@@ -93,7 +94,7 @@ def receive_local_packet(local_packet_queue):
     global connection_to_local
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_local:
-
+        socket_local.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         socket_local.bind((MY_IP, LOCAL_PORT))
         socket_local.listen()
 
