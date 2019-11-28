@@ -5,10 +5,11 @@ import time
 import struct
 import packet_builders.node_broadcast as node_broadcast_builder
 import packet_builders.distributed_packet_builder as distributed_packet_builder
+import packet_builders.node_ok_packet_builder as node_ok_packet_builder
 from enum_operation_code import Operation_Code
 
-NODES_PORT = 3114
-BROADCAST_NODES_PORT = 5000
+NODES_PORT = 3133
+BROADCAST_NODES_PORT = 5019
 
 # page id - node id
 page_location = {}
@@ -20,14 +21,14 @@ nodes_location = {}
 current_size_nodes = {}
 
 
-LOCAL_PORT = 2000
+LOCAL_PORT = 2040
 MY_IP = '10.1.137.218'
 
 connection_to_local = None
 
 
 # To given node
-def send_packet_node(packet, node_ip, node_port):
+def send_packet_node_no_answer(packet, node_ip, node_port):
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_node:
 
@@ -36,42 +37,23 @@ def send_packet_node(packet, node_ip, node_port):
         print("[INTERFAZ ACTIVA] Paquete enviado a nodo, ip: " + node_ip + ", paquete: ", end='')
         print(packet)
         socket_node.sendall(packet)
-    
+        socket_node.close()
 
-# From a node
-def receive_packet_node():
-    
+def send_packet_node_wait_answer(packet, node_ip, node_port):
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_node:
 
-        socket_node.bind((MY_IP, NODES_PORT))
-        socket_node.listen()
+        socket_node.connect((node_ip, node_port))
 
-        while True:
-            conn, addr = socket_node.accept()
-            packet = conn.recv(1024)
-            
-            # DEBUGGING
-            print("[INTERFAZ ACTIVA] Paquete recibido desde NM, ip: " + addr + ", paquete: ", end='')
-            print(packet)
+        print("[INTERFAZ ACTIVA] Paquete enviado a nodo, ip: " + node_ip + ", paquete: ", end='')
+        print(packet)
+        socket_node.sendall(packet)
 
-            data_tuple = struct.unpack_from(distributed_packet_builder.INITIAL_FORMAT, packet)
+        answer = socket_node.recv(1024)
 
-            operation_code = data_tuple[0]
-            page_id = data_tuple[1]
+        socket_node.close()
 
-            if(operation_code == Operation_Code.OK.value):
-
-                # Update size
-                size = struct.unpack_from(distributed_packet_builder.INITIAL_FORMAT + "I", packet)[2]
-                node_id = page_location[page_id]
-                current_size_nodes[node_id] = size
-
-                new_packet = distributed_packet_builder.create_ok_local_packet(page_id=page_id)
-                send_packet_local(new_packet)
-
-            elif(operation_code == Operation_Code.SEND.value):
-
-                send_packet_local(packet)
+        return answer
 
 
 def enroll_node():
@@ -81,6 +63,8 @@ def enroll_node():
     socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     socket_broadcast_node.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     socket_broadcast_node.bind(("10.1.255.255", BROADCAST_NODES_PORT))
+
+
     while True:
         packet, addr = socket_broadcast_node.recvfrom(1024)
         
@@ -92,10 +76,7 @@ def enroll_node():
         nodes_location[len(nodes_location)] = addr[0]
         current_size_nodes[len(current_size_nodes)] = data[1]
 
-        print(nodes_location)
-        print(current_size_nodes)
-
-        send_packet_node(distributed_packet_builder.create_ok_broadcast_packet(), addr[0] , NODES_PORT)
+        send_packet_node_no_answer(distributed_packet_builder.create_ok_broadcast_packet(), addr[0] , NODES_PORT)
 
 
 # To local memory
@@ -125,49 +106,62 @@ def receive_local_packet(local_packet_queue):
                 print("[INTERFAZ ACTIVA] Paquete recibido desde ML, paquete: ", end='')
                 print(data)
                 local_packet_queue.put(data)
-
+# Returns id
 def choose_node():
     biggest_size = -1
-    big_ip = None
+    big_id = None
 
     for node_id in current_size_nodes:
 
         if(current_size_nodes[node_id] > biggest_size):
             biggest_size = current_size_nodes[node_id]
-            big_ip = node_id
+            big_id = node_id
 
-    return big_ip
+    return big_id
 
 def process_local_packet(local_packet_queue):
     while True:
 
         packet = local_packet_queue.get()
         operation_code = struct.unpack_from('B', packet)[0]
+        page_id = struct.unpack_from('BB', packet)[1]
 
         if(operation_code == Operation_Code.SAVE.value):
             # No need to process, is the same packet that needs to be sent
-            send_packet_node(packet, choose_node(), NODES_PORT)
+            node_id = choose_node()
+            answer = send_packet_node_wait_answer(packet, nodes_location[node_id], NODES_PORT)
+            print("[INTERFAZ ACTIVA] Paquete recibido desde NM con SAVE ", end="")
+            print(answer)
 
-        elif(operation_code == Operation_Code.READ.value):  
+            page_location[page_id] = node_id
+
+            answer_packet = struct.unpack(node_ok_packet_builder.FORMAT, answer)
+
+            # Create an ok packet with given page id and send it to local
+            send_packet_local(distributed_packet_builder.create_ok_local_packet(answer_packet[1]))
+        elif(operation_code == Operation_Code.READ.value):
+
             # Where is the page?
             page_id = struct.unpack(distributed_packet_builder.INITIAL_FORMAT, packet)[1]
-            node_id = page_location[page_id]
-            send_packet_node(packet, nodes_location[node_id], NODES_PORT)
+            node_id = page_location[page_id]    #AQUI PASA ALGO
+            answer = send_packet_node_wait_answer(packet, nodes_location[node_id], NODES_PORT)
+            
+            print("[INTERFAZ ACTIVA] Paquete recibido desde NM con READ ", end="")
+            print(answer)
+            send_packet_local(answer)
+
 
 def execute():
     local_packet_queue = queue.Queue()
 
-    receive_packet_node_thread = threading.Thread(target=receive_packet_node)
     receive_local_packet_thread = threading.Thread(target=receive_local_packet, args=(local_packet_queue,))
     process_local_packet_thread = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
     enroll_node_thread = threading.Thread(target=enroll_node,)
 
-    receive_packet_node_thread.start()
     receive_local_packet_thread.start()
     process_local_packet_thread.start()
     enroll_node_thread.start()
     
-    receive_packet_node_thread.join()
     receive_local_packet_thread.join()
     process_local_packet_thread.join()
     enroll_node_thread.join()
