@@ -27,8 +27,8 @@ metadata_size = 18
 byte_table = [0 for x in range(max_size)]
 count_node = 0
 
-BC_PORT = 5018
-TCP_PORT = 3132
+BC_PORT = 5019
+TCP_PORT = 3133
 
 def set_id():
     global count_node
@@ -221,6 +221,7 @@ def get_page(op_id, page_id):
 
             node_DI_packet_builder.get_save_format(data_size)
             packet_to_send = struct.pack(node_DI_packet_builder.get_save_format(data_size), processed_metadata[0], processed_metadata[1], processed_data)
+            print("sefesgeg", packet_to_send)
             return (packet_to_send)
             
 
@@ -287,8 +288,9 @@ def listen_interface(waiting_queue_packets, ok_queue):
                     conn.sendall(ok)
                 
                 elif (initial_values[0] == 1):
-
-                    ok_data = struct.unpack(distributed_packet_builder.create_ok_local_packet , data)
+                    print("label ", data)
+                    #b'\x01\x01'
+                    ok_data = struct.unpack(distributed_packet_builder.INITIAL_FORMAT , data)
                     print(get_page(ok_data[0], ok_data[1]))
                     conn.sendall((get_page(ok_data[0], ok_data[1])))
                     
