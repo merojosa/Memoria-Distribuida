@@ -27,8 +27,8 @@ metadata_size = 18
 byte_table = [0 for x in range(max_size)]
 count_node = 0
 
-BC_PORT = 5003
-TCP_PORT = 3117
+BC_PORT = 5018
+TCP_PORT = 3132
 
 def set_id():
     global count_node
@@ -44,6 +44,7 @@ def generate_node_id():
 
 def save_page(recieved_queue):
     packet = recieved_queue.get()
+    print(packet)
     op_id = packet[0]
     page_id = packet[1]
     page_size = packet[2]
@@ -52,8 +53,11 @@ def save_page(recieved_queue):
     global byte_table
     inTable = False
     start_index = 0
-    for i in range(0, metadata_pos):
+
+    for i in range(8, metadata_pos):
+        print(metadata_pos)
         if(op_id == byte_table[i] and page_id == byte_table[i+1]):
+            print("f")
             inTable = True
             start_index = i
             break
@@ -62,11 +66,11 @@ def save_page(recieved_queue):
         metadata_array = []
         for i in range(start_index, start_index + metadata_size):
             metadata_array.append(byte_table[i])
-        asked_metadata = bytearray(metadata_array, 'utf-8')
+        asked_metadata = bytearray(metadata_array)
         processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
         #new_size = abs(processed_metadata[2]-page_size)
-        size_left += new_size
-        modify_content(op_id, page_id, page_size, data, processed_metadata[5])
+        #size_left += new_size
+        modify_content(op_id, page_id, page_size, data, start_index)
     else:
         size_left += page_size
         add_to_table(op_id, page_id, page_size, data)
@@ -84,7 +88,6 @@ def modify_content(op_id, page_id, page_size, data, meta_start):
     processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
 
     data_location = processed_metadata[5]
-    print (data_location)
     mod_date_bytes = int(time.mktime(modification_date.timetuple()))
 
     new_meta = struct.pack(node_data_packet_builder.FORMAT, op_id, page_id, page_size, processed_metadata[3], mod_date_bytes, data_location)
@@ -95,11 +98,12 @@ def modify_content(op_id, page_id, page_size, data, meta_start):
         meta_iter += 1
 
     data_iter = data_location
-    data_bytes = bytearray(data, 'utf-8')
+    data_bytes = bytearray(data)
+    print(data_iter)
+    print(data)
     for aByte in data_bytes:
         byte_table[data_iter] = aByte
         data_iter -= 1
-    print(byte_table)
     write_to_file()
 
 
@@ -108,7 +112,7 @@ def add_to_table(op_id, page_id, page_size, data):
     global metadata_pos
     global data_pos
     global byte_table
-    print(metadata_pos)
+
     creation_date = datetime.now()
     modification_date = datetime.now()
 
@@ -116,18 +120,16 @@ def add_to_table(op_id, page_id, page_size, data):
     mod_date_bytes = int(time.mktime(modification_date.timetuple()))
     
     bytes_data = node_data_packet_builder.create(op_id, page_id, page_size, crea_date_bytes, mod_date_bytes, data_pos)
-    print(bytes_data)
     for meta_byte in bytes_data:
         byte_table[metadata_pos] = meta_byte
         metadata_pos += 1
-    print(data)
-    data_bytes = bytearray(data, 'utf-8')
-    print(data_bytes)
-    for aByte in data_bytes:
+    #data_bytes = bytearray(data, 'utf-8')
+
+    for aByte in data:
         byte_table[data_pos] = aByte
         data_pos -= 1
-    print(byte_table)
     write_to_file()
+    read_from_file()
 
 
 def write_to_file():
@@ -138,14 +140,12 @@ def write_to_file():
     
     meta_pos_bytes = metadata_pos.to_bytes(4, 'big')
     data_pos_bytes = data_pos.to_bytes(4, 'big')
-    print(data_pos_bytes)
-    print(meta_pos_bytes)
+
     for i in range(0,4):
         byte_table[i] = meta_pos_bytes[i]
         byte_table[i+4] = data_pos_bytes[i]
  
     output_file = open('file', 'wb')
-    print(byte_table)
     array_to_file = bytes(byte_table)
     output_file.write(array_to_file)
     output_file.close()
@@ -173,20 +173,26 @@ def read_from_file():
     metadata_pos = int.from_bytes(meta_pos_bytes, 'big')
     data_pos = int.from_bytes(data_pos_bytes, 'big')
 
+#def clear_file():
+
 
 def list_files():
-    read_from_file()
-    for i in range(8, metadata_pos, metadata_size):
-        metadata_array = []
-        for j in range(i, i + metadata_size):
-            metadata_array.append(byte_table[j])
-        asked_metadata = bytearray(metadata_array)
-        processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
-        print("Codigo de operacion: " + str(processed_metadata[0]) + "  "
-        + "Numero de pagina: " + str(processed_metadata[1]) + "  "
-        + "Tamanno de pagina: " + str(processed_metadata[2]) + "  "
-        + "Fecha de creacion:" + str(datetime.fromtimestamp(processed_metadata[3])) + "  "
-        + "Fecha de modificacion:" + str(datetime.fromtimestamp(processed_metadata[4])))
+    while True:
+        user_input = input()
+        type(str(user_input))
+        if(user_input == "ls"):
+            read_from_file()
+            for i in range(8, metadata_pos, metadata_size):
+                metadata_array = []
+                for j in range(i, i + metadata_size):
+                    metadata_array.append(byte_table[j])
+                asked_metadata = bytearray(metadata_array)
+                processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
+                print("Codigo de operacion: " + str(processed_metadata[0]) + "  "
+                + "Numero de pagina: " + str(processed_metadata[1]) + "  "
+                + "Tamanno de pagina: " + str(processed_metadata[2]) + "  "
+                + "Fecha de creacion:" + str(datetime.fromtimestamp(processed_metadata[3])) + "  "
+                + "Fecha de modificacion:" + str(datetime.fromtimestamp(processed_metadata[4])))
 
 
 def get_page(op_id, page_id):
@@ -221,9 +227,11 @@ def send_data(op_id, page_id):
 
 def send_size(broadcast_queue_packets):
     global size_left
+    global byte_table
     my_broadcast  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     my_broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     
+    read_from_file()
     while True:
         if not broadcast_queue_packets.empty():
             break
@@ -285,12 +293,15 @@ def main():
 
     save_queue_process = threading.Thread(target=listen_interface, args=(save_queue_packets, ok_queue,))
     send_broadcast_process = threading.Thread(target=send_size, args=(ok_queue,))
+    listing_process = threading.Thread(target = list_files) 
 
     send_broadcast_process.start()
     save_queue_process.start()
+    listing_process.start()
 
     send_broadcast_process.join()
     save_queue_process.join()
+    listing_process.join()
 
 main()
 
