@@ -167,4 +167,3 @@ def execute():
     process_local_packet_thread.join()
     enroll_node_thread.join()
 
-execute()

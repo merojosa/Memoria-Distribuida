@@ -1,6 +1,5 @@
 import paquete_competir
 import paquete_activa
-import ID_ID
 
 import uuid
 import socket
@@ -9,7 +8,7 @@ import time
 import os
 
 def get_hex_mac(mac):
-    mac_num = hex(int.from_bytes(mac, 'big')).replace('0x', '').upper()
+    mac_num = hex(int.from_bytes(mac, 'little')).replace('0x', '').upper()
     mac = ':'.join(mac_num[i: i + 2] for i in range(0, 11, 2))
     return mac
 
@@ -17,9 +16,8 @@ def get_hex_mac(mac):
 def main():
 
     """
-
     # MAC en 6 bytes
-    mac = uuid.getnode().to_bytes(6, 'big')
+    mac = uuid.getnode().to_bytes(6, 'little')
     print("MAC en 6 bytes: ", mac)
     print("MAC normal: ", get_hex_mac(mac))
 
@@ -85,8 +83,6 @@ def main():
 
     print()
 
-    """
-
     # Pruebas de socket
     UDP_IP = '192.168.1.255'
     UDP_PORT = 6666
@@ -96,11 +92,27 @@ def main():
     sock.bind((UDP_IP, UDP_PORT))
     print(ID_ID.champions(sock, 0))
     
-    #os.system("sudo ifconfig eth0 down")
-    #os.system("sudo ifconfig eth0 10.1.138.199")
-    #os.system("sudo ifconfig wlan0 192.168.1.199")
-    #os.system("sudo ifconfig eth0 up")
-
+    """
+    nodes_location = {}
+    nodes_location[1] = 2
+    nodes_location[3] = 4
+    nodes_location[5] = 6
+    current_size_nodes = {}
+    current_size_nodes[1] = "a"
+    current_size_nodes[3] = "b"
+    current_size_nodes[5] = "c"
     
-
+    lista = []
+    
+    print(len(nodes_location))
+    
+    for i in nodes_location.keys():
+        lista.append(i)
+        lista.append(nodes_location[i])
+        lista.append(current_size_nodes[i])
+    
+    print(lista)
+    
+    
+    
 main()
