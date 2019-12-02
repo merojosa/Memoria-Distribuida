@@ -132,6 +132,7 @@ def add_to_table(op_id, page_id, page_size, data):
     #data_bytes = bytearray(data, 'utf-8')
 
     for aByte in data:
+        print(data_pos)
         byte_table[data_pos] = aByte
         data_pos -= 1
     write_to_file()
@@ -186,6 +187,7 @@ def list_files():
     global metadata_pos
     global size_left
     global data_pos
+    global byte_table
     while True:
         user_input = input()
         type(str(user_input))
@@ -194,6 +196,7 @@ def list_files():
             for i in range(8, metadata_pos, metadata_size):
                 metadata_array = []
                 for j in range(i, i + metadata_size):
+                    print(j)
                     metadata_array.append(byte_table[j])
                 asked_metadata = bytearray(metadata_array)
                 processed_metadata = struct.unpack(node_data_packet_builder.FORMAT, asked_metadata)
@@ -204,7 +207,7 @@ def list_files():
                 + "Fecha de modificacion:" + str(datetime.fromtimestamp(processed_metadata[4])))
         elif(user_input == "clear"):
             metadata_pos = beginning
-            data_pos = totalSize
+            data_pos = totalSize-1
             size_left = data_pos-metadata_pos
             byte_table = [0 for x in range(totalSize)]
             write_to_file()
