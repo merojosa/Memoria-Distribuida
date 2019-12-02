@@ -11,6 +11,9 @@ from enum_operation_code import Operation_Code
 NODES_PORT = 3114
 BROADCAST_NODES_PORT = 5000
 
+UPDATE_PAGE = 0
+UPDATE_NODE = 1
+
 # page id - node id
 page_location = {}
 
@@ -57,7 +60,7 @@ def send_packet_node_wait_answer(packet, node_ip, node_port):
         return answer
 
 
-def enroll_node():
+def enroll_node(update_metadata_queue):
     global current_size_nodes
     global nodes_location
 
@@ -74,8 +77,12 @@ def enroll_node():
         # DEBUGGING
         print('[INTERFAZ ACTIVA] Nodo registrado, ip: ' + addr[0] + ', tamanno: ' + str(data[1] ) )
 
-        nodes_location[len(nodes_location)] = addr[0]
-        current_size_nodes[len(current_size_nodes)] = data[1]
+        node_id = len(nodes_location)
+
+        # Update metada
+        nodes_location[node_id] = addr[0]
+        current_size_nodes[node_id] = data[1]
+        update_metadata_queue.put([UPDATE_NODE, node_id, addr, data[1]])
 
         send_packet_node_no_answer(distributed_packet_builder.create_ok_broadcast_packet(), addr[0] , NODES_PORT)
 
@@ -120,7 +127,7 @@ def choose_node():
 
     return big_id
 
-def process_local_packet(local_packet_queue):
+def process_local_packet(local_packet_queue, update_metadata_queue):
     while True:
 
         packet = local_packet_queue.get()
@@ -134,17 +141,20 @@ def process_local_packet(local_packet_queue):
             print("[INTERFAZ ACTIVA] Paquete recibido desde NM con SAVE ", end="")
             print(answer)
 
-            page_location[page_id] = node_id
-
             answer_packet = struct.unpack(node_ok_packet_builder.FORMAT, answer)
 
-            # Create an ok packet with given page id and send it to local
+            # Update metadata
+            page_location[page_id] = node_id
+            current_size_nodes[node_id] = answer_packet[2]
+            update_metadata_queue.put([UPDATE_NODE, node_id, nodes_location[node_id], answer_packet[2]])
+
+            # Create an ok packet with a given page id and send it to local
             send_packet_local(distributed_packet_builder.create_ok_local_packet(answer_packet[1]))
         elif(operation_code == Operation_Code.READ.value):
 
             # Where is the page?
             page_id = struct.unpack(distributed_packet_builder.INITIAL_FORMAT, packet)[1]
-            node_id = page_location[page_id]    #AQUI PASA ALGO
+            node_id = page_location[page_id]
             answer = send_packet_node_wait_answer(packet, nodes_location[node_id], NODES_PORT)
             
             print("[INTERFAZ ACTIVA] Paquete recibido desde NM con READ ", end="")
@@ -152,12 +162,12 @@ def process_local_packet(local_packet_queue):
             send_packet_local(answer)
 
 
-def execute():
+def execute(update_metadata_queue):
     local_packet_queue = queue.Queue()
 
     receive_local_packet_thread = threading.Thread(target=receive_local_packet, args=(local_packet_queue,))
-    process_local_packet_thread = threading.Thread(target=process_local_packet, args=(local_packet_queue,))
-    enroll_node_thread = threading.Thread(target=enroll_node,)
+    process_local_packet_thread = threading.Thread(target=process_local_packet, args=(local_packet_queue, update_metadata_queue,))
+    enroll_node_thread = threading.Thread(target=enroll_node, args=(update_metadata_queue,))
 
     receive_local_packet_thread.start()
     process_local_packet_thread.start()
