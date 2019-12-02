@@ -45,7 +45,15 @@ def tiempo_extra(sock, ronda):
         
         except socket.timeout:
             print("Gane la champions en tiempo extra")
-            paquete = paquete_dump_total()3
+            paquete = paquete_dump_total()
+            sock.sendto(paquete, (UDP_IP, UDP_PORT))
+            break  
+            
+    return campeon
+
+
+def escuchar_datos(sock, cola, end):
+    
     timeout = 1
     
     while True:
@@ -231,7 +239,7 @@ def start():
 
         if resultado == True:
             resultado = tiempo_extra(sock, ronda)
-            print("Entrando a tiempo extra")
+            
             if resultado == True:
                 # Falta la IP fija
                 # os.system("sudo ifconfig eth0 down")
