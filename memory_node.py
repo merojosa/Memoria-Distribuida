@@ -19,16 +19,16 @@ from enum_operation_code import Operation_Code
 
 active_interface_ip = ''
 node_id = 0
-max_size = 100+8
-size_left = 100
+max_size = 1000+8
+size_left = 1000
 metadata_pos = 8
 data_pos = max_size-1
 metadata_size = 18
 byte_table = [0 for x in range(max_size)]
 count_node = 0
 
-BC_PORT = 5019
-TCP_PORT = 3133
+BC_PORT = 5000
+TCP_PORT = 3114
 
 def set_id():
     global count_node
@@ -73,7 +73,7 @@ def save_page(recieved_queue):
         #size_left += new_size
         modify_content(op_id, page_id, page_size, data, start_index)
     else:
-        size_left += page_size
+        size_left += page_size + metadata_size
         add_to_table(op_id, page_id, page_size, data)
 
 
@@ -159,7 +159,7 @@ def read_from_file():
     global byte_table
     global metadata_pos
     global data_pos
-    
+    global size_left
     try:
         input_file = open('file', 'rb')
         try:
@@ -173,6 +173,7 @@ def read_from_file():
                 data_pos_bytes.append(byte_table[i+4])
             metadata_pos = int.from_bytes(meta_pos_bytes, 'big')
             data_pos = int.from_bytes(data_pos_bytes, 'big')
+            size_left = data_pos - metadata_pos
             print(byte_table)
         finally:
             input_file.close()
@@ -217,9 +218,13 @@ def get_page(op_id, page_id):
             for k in range(0, data_size):
                 data_array.append(byte_table[processed_metadata[5]-k])
             processed_data = bytes(data_array)
-
+            print(processed_metadata[0])
+            print(processed_metadata[1])
             node_DI_packet_builder.get_save_format(data_size)
-            packet_to_send = struct.pack(node_DI_packet_builder.get_save_format(data_size), processed_metadata[0], processed_metadata[1], processed_data)
+            print("data size", data_size)
+            print("format", node_DI_packet_builder.get_save_format(data_size))
+            packet_to_send = struct.pack(node_DI_packet_builder.get_save_format(data_size), op_id, processed_metadata[1], processed_data)
+            print(struct.unpack(node_DI_packet_builder.get_save_format(data_size),packet_to_send))
             print("sefesgeg", packet_to_send)
             return (packet_to_send)
             
@@ -247,10 +252,12 @@ def send_size(broadcast_queue_packets):
 
 
 def listen_interface(waiting_queue_packets, ok_queue):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("10.1.137.45",TCP_PORT))
-        s.listen()
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:        
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
+        s.bind(("10.1.137.45 ",TCP_PORT))
         while True:
+            print("breakpoint")
+            s.listen()
             conn, addr = s.accept()
             with conn:
                 print('Connected by', addr)
