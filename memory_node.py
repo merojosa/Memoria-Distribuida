@@ -20,7 +20,7 @@ from enum_operation_code import Operation_Code
 
 active_interface_ip = ''
 node_id = 0
-totalSize = 1000
+totalSize = 10000
 beginning = 8
 metadata_pos = beginning
 size_left = totalSize-beginning
