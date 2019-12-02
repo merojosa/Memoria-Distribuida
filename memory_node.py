@@ -8,6 +8,7 @@ import struct
 import socket
 import queue
 import threading
+import os
 
 import packet_builders.distributed_packet_builder as distributed_packet_builder
 import packet_builders.node_broadcast as node_broadcast
@@ -19,12 +20,13 @@ from enum_operation_code import Operation_Code
 
 active_interface_ip = ''
 node_id = 0
-max_size = 1000+8
-size_left = 1000
-metadata_pos = 8
-data_pos = max_size-1
+totalSize = 10000
+beginning = 8
+metadata_pos = beginning
+size_left = totalSize-beginning
+data_pos = totalSize-1
 metadata_size = 18
-byte_table = [0 for x in range(max_size)]
+byte_table = [0 for x in range(totalSize)]
 count_node = 0
 
 BC_PORT = 5000
@@ -181,6 +183,9 @@ def read_from_file():
         print("File not found")
 
 def list_files():
+    global metadata_pos
+    global size_left
+    global data_pos
     while True:
         user_input = input()
         type(str(user_input))
@@ -197,6 +202,13 @@ def list_files():
                 + "Tamanno de pagina: " + str(processed_metadata[2]) + "  "
                 + "Fecha de creacion:" + str(datetime.fromtimestamp(processed_metadata[3])) + "  "
                 + "Fecha de modificacion:" + str(datetime.fromtimestamp(processed_metadata[4])))
+        elif(user_input == "clear"):
+            metadata_pos = beginning
+            data_pos = totalSize
+            size_left = data_pos-metadata_pos
+            byte_table = [0 for x in range(totalSize)]
+            write_to_file()
+
 
 
 def get_page(op_id, page_id):
