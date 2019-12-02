@@ -255,10 +255,11 @@ def start():
                 break
 
         else:
-            ("Soy Pasiva")
+            print("Soy Pasiva")
             receive_packet_process = threading.Thread(target=actualizar_tabla, args=(sock,))
             receive_packet_process.start()
             receive_packet_process.join()
+            print("No hay Keep Alive")
 
         ronda = 3
 
