@@ -9,8 +9,8 @@ import active_distributed_interface
 import paquete_competir
 import paquete_activa
 
-UDP_IP = '192.168.100.255'
-UDP_PORT = 6666
+UDP_IP = '10.1.255.255'
+UDP_PORT = 6667
 
 
 def obener_metadatos():
@@ -260,6 +260,10 @@ def recibir_keep_alive(sock):
                 datos = paquete_activa.desempaquetar(paquete_datos)
                 guardar_metadatos(datos)
 
+                print("[Pasiva] Tabla de paginas: ", active_distributed_interface.page_location)
+                print("[Pasiva] Tabla de nodos: ", active_distributed_interface.nodes_location)
+                print("[Pasiva] Tabla de espacio: ", active_distributed_interface.current_size_nodes)
+
             if keep_alive_tiempo_espera <= 0:
                 cola_finalizar_proceso.put(True)
                 break
@@ -285,15 +289,19 @@ def enviar_keep_alive(sock, cola_actualizaciones):
                 lista_paginas = [datos[1], datos[2]]
                 paquete = paquete_activa.crear(op_code=2, numero_paginas=1, numero_nodos=0, lista_paginas=lista_paginas)
                 sock.sendto(paquete, (UDP_IP, UDP_PORT))
+                print("[Activa] Paquete keep alive enviado: "paquete)
 
             elif datos[0] == 1:
-                lista_nodos = [datos[1], datos[2], datos[3]]
+                direccion_ip = socket.inet_aton(datos[2])
+                lista_nodos = [datos[1], direccion_ip, datos[3]]
                 paquete = paquete_activa.crear(op_code=2, numero_paginas=0, numero_nodos=1, lista_nodos=lista_nodos)
                 sock.sendto(paquete, (UDP_IP, UDP_PORT))
+                print("[Activa] Paquete keep alive enviado: "paquete)
 
         except queue.Empty:
             paquete = paquete_activa.crear(op_code=2, numero_paginas=0, numero_nodos=0)
             sock.sendto(paquete, (UDP_IP, UDP_PORT))
+            print("[Activa] Paquete keep alive enviado: "paquete)
 
     return
 

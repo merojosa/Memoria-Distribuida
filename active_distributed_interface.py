@@ -8,8 +8,8 @@ import packet_builders.distributed_packet_builder as distributed_packet_builder
 import packet_builders.node_ok_packet_builder as node_ok_packet_builder
 from enum_operation_code import Operation_Code
 
-NODES_PORT = 3114
-BROADCAST_NODES_PORT = 5000
+NODES_PORT = 3115
+BROADCAST_NODES_PORT = 5001
 
 UPDATE_PAGE = 0
 UPDATE_NODE = 1
@@ -82,7 +82,7 @@ def enroll_node(update_metadata_queue):
         # Update metada
         nodes_location[node_id] = addr[0]
         current_size_nodes[node_id] = data[1]
-        update_metadata_queue.put([UPDATE_NODE, node_id, addr, data[1]])
+        update_metadata_queue.put([UPDATE_NODE, node_id, addr[0], data[1]])
 
         send_packet_node_no_answer(distributed_packet_builder.create_ok_broadcast_packet(), addr[0] , NODES_PORT)
 
