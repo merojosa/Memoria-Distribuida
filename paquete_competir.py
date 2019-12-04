@@ -5,7 +5,7 @@ FORMAT = 'B6sB'
 
 
 def crear(ronda):
-    mac = uuid.getnode().to_bytes(6, 'big')
+    mac = uuid.getnode().to_bytes(6, 'little')
     return struct.pack(FORMAT, 0, mac, ronda)
 
 

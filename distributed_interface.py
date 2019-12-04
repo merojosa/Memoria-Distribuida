@@ -9,10 +9,10 @@ import active_distributed_interface
 import paquete_competir
 import paquete_activa
 
-UDP_IP = '10.164.71.255'
+UDP_IP = '10.1.255.255'
 UDP_PORT = 6666
 
-def tiempo_extra(sock):
+def tiempo_extra(sock, ronda):
     
     timeout = 1
     campeon = True
@@ -44,6 +44,7 @@ def tiempo_extra(sock):
                     break
         
         except socket.timeout:
+            print("Gane la champions en tiempo extra")
             paquete = paquete_dump_total()
             sock.sendto(paquete, (UDP_IP, UDP_PORT))
             break  
@@ -144,7 +145,7 @@ def champions(sock, ronda):
             
     sorteo_process.join()
     
-    return campeon
+    return ronda, campeon
 
 def paquete_dump_total():
     numero_paginas = len(active_distributed_interface.page_location)
@@ -161,7 +162,7 @@ def paquete_dump_total():
         lista_nodos.append(active_distributed_interface.nodes_location[i])
         lista_nodos.append(active_distributed_interface.current_size_nodes[i])
         
-    return paquete_activa.crear(op_code=1, numero_paginas=numero_paginas, numero_nodos=numero_nodos, lista_paginas, lista_nodos)
+    return paquete_activa.crear(op_code=1, numero_paginas=numero_paginas, numero_nodos=numero_nodos, lista_paginas=lista_paginas, lista_nodos=lista_nodos)
     
 
 def guardar_actualizaciones(datos):
@@ -180,7 +181,7 @@ def guardar_actualizaciones(datos):
     espacio_disponible = ip + 1
     for _ in range(int(datos[2])):
         active_distributed_interface.nodes_location[datos[nodo_id]] = datos[ip]
-        active_distributed_interface.current_size_nodes[datos[nodo_id]] = espacio_disponible]
+        active_distributed_interface.current_size_nodes[datos[nodo_id]] = [espacio_disponible]
 
     return
     
@@ -228,15 +229,16 @@ def start():
     sock.bind((UDP_IP, UDP_PORT))
 
     paquetes_pasivos = queue.Queue()
+    cola_actualizacion = queue.Queue()
 
     ronda = 0
 
     while True:
 
-        resultado = champions(sock, ronda)
+        ronda, resultado = champions(sock, ronda)
 
         if resultado == True:
-            resultado = tiempo_extra(sock)
+            resultado = tiempo_extra(sock, ronda)
             
             if resultado == True:
                 # Falta la IP fija
@@ -245,15 +247,22 @@ def start():
                 # os.system("sudo ifconfig eth0 up")
                 
                 # Esto debe ser un hilo
-                active_distributed_interface.execute()
-                
+                # active_distributed_interface.execute(cola_actualizacion)
+                print("Funciono como activa")
                 # Aqui debo actualizar interfaces pasivas
-        else:
+                # Esto debe ser un hilo
+                # actualizar_a_los_demas(cola_actualizacion)
+                break
 
+        else:
+            print("Soy Pasiva")
             receive_packet_process = threading.Thread(target=actualizar_tabla, args=(sock,))
             receive_packet_process.start()
             receive_packet_process.join()
+            print("No hay Keep Alive")
 
         ronda = 3
 
     return
+
+start()
