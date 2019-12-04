@@ -9,6 +9,9 @@ import active_distributed_interface
 import paquete_competir
 import paquete_activa
 
+from subprocess import call
+
+TPC_IP = "192.168.1.199"
 UDP_IP = '10.1.255.255'
 UDP_PORT = 9876
 
@@ -331,10 +334,10 @@ def iniciar():
 
             if resultado == True:
 
-                # Falta la IP fija
-                # os.system("sudo ifconfig eth0 down")
-                # os.system("sudo ifconfig eth0 1.1.1.1")
-                # os.system("sudo ifconfig eth0 up")
+                print("[Activa] Adquiriendo IP")
+
+                call(["sudo", "ip", "addr", "flush", "dev", "eth0"])
+                call(["ip", "a", "add", TPC_IP + "/255.255.255.0", "dev", "eth0"])
 
                 print("[Activa] Inicializando servicios")
 
