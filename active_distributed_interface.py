@@ -8,8 +8,8 @@ import packet_builders.distributed_packet_builder as distributed_packet_builder
 import packet_builders.node_ok_packet_builder as node_ok_packet_builder
 from enum_operation_code import Operation_Code
 
-NODES_PORT = 3115
-BROADCAST_NODES_PORT = 5001
+NODES_PORT = 3116
+BROADCAST_NODES_PORT = 5002
 
 UPDATE_PAGE = 0
 UPDATE_NODE = 1
@@ -82,10 +82,11 @@ def enroll_node(update_metadata_queue):
         # Update metada
         nodes_location[node_id] = addr[0]
         current_size_nodes[node_id] = data[1]
+        print("[METADATOS ACTUALIZADOS EN REGISTRO DE NODO] ", [UPDATE_NODE, node_id, addr[0], data[1]])
         update_metadata_queue.put([UPDATE_NODE, node_id, addr[0], data[1]])
 
         send_packet_node_no_answer(distributed_packet_builder.create_ok_broadcast_packet(), addr[0] , NODES_PORT)
-
+nodes_location
 
 # To local memory
 # Note that before it sends a packet, it needs to have a connection_to_local, ie, receive a packet from local.
@@ -147,6 +148,11 @@ def process_local_packet(local_packet_queue, update_metadata_queue):
             page_location[page_id] = node_id
             current_size_nodes[node_id] = answer_packet[2]
             update_metadata_queue.put([UPDATE_PAGE, page_id, node_id])
+            update_metadata_queue.put([UPDATE_NODE, node_id, nodes_location[node_id], current_size_nodes[node_id]])
+            print("[METADATOS CAMBIADOS DESDE GUARDADO DE PAGINA] Page Location ", page_location)
+            print("[METADATOS CAMBIADOS DESDE GUARDADO DE PAGINA] Nodes Location ", nodes_location)
+            print("[METADATOS CAMBIADOS DESDE GUARDADO DE PAGINA] Current Size Nodes ", current_size_nodes)
+
 
             # Create an ok packet with a given page id and send it to local
             send_packet_local(distributed_packet_builder.create_ok_local_packet(answer_packet[1]))
