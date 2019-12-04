@@ -25,7 +25,7 @@ current_size_nodes = {}
 
 
 LOCAL_PORT = 2002
-MY_IP = '10.1.137.218'
+MY_IP = '10.1.137.66'
 
 connection_to_local = None
 
