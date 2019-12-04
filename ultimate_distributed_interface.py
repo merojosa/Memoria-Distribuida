@@ -105,12 +105,14 @@ def champions(sock, ronda):
 
                 elif datos_ronda > ronda:
                     print("[Champions] Perdi la champions por tener una ronda menor")
+                    time.sleep(tiempo_espera + 1)
                     soy_campeon = False
                     cola_finalizar_proceso.put(soy_campeon)
                     break
 
                 elif datos_mac > direccion_mac:
                     print("[Champions] Perdi la champions por tener una direccion MAC menor")
+                    time.sleep(tiempo_espera + 1)
                     soy_campeon = False
                     cola_finalizar_proceso.put(soy_campeon)
                     break
@@ -289,19 +291,19 @@ def enviar_keep_alive(sock, cola_actualizaciones):
                 lista_paginas = [datos[1], datos[2]]
                 paquete = paquete_activa.crear(op_code=2, numero_paginas=1, numero_nodos=0, lista_paginas=lista_paginas)
                 sock.sendto(paquete, (UDP_IP, UDP_PORT))
-                print("[Activa] Paquete keep alive enviado: "paquete)
+                print("[Activa] Paquete keep alive enviado: ", paquete)
 
             elif datos[0] == 1:
                 direccion_ip = socket.inet_aton(datos[2])
                 lista_nodos = [datos[1], direccion_ip, datos[3]]
                 paquete = paquete_activa.crear(op_code=2, numero_paginas=0, numero_nodos=1, lista_nodos=lista_nodos)
                 sock.sendto(paquete, (UDP_IP, UDP_PORT))
-                print("[Activa] Paquete keep alive enviado: "paquete)
+                print("[Activa] Paquete keep alive enviado: ", paquete)
 
         except queue.Empty:
             paquete = paquete_activa.crear(op_code=2, numero_paginas=0, numero_nodos=0)
             sock.sendto(paquete, (UDP_IP, UDP_PORT))
-            print("[Activa] Paquete keep alive enviado: "paquete)
+            print("[Activa] Paquete keep alive enviado: ", paquete)
 
     return
 
