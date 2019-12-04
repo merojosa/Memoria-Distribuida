@@ -9,8 +9,8 @@ import active_distributed_interface
 import paquete_competir
 import paquete_activa
 
-UDP_IP = '192.168.1.255'
-UDP_PORT = 6667
+UDP_IP = '10.1.255.255'
+UDP_PORT = 9876
 
 
 def obener_metadatos():
@@ -251,7 +251,8 @@ def recibir_keep_alive(sock, tiempo_espera_restante):
         try:
             paquete_recibido_completo = cola_paquetes.get(timeout=keep_alive_tiempo_espera)
             paquete_datos = paquete_recibido_completo[0]
-            print("[Pasiva] Paquete keep alive recibido: ", paquete_datos)
+            paquete_addrs = paquete_recibido_completo[1]
+            print("[Pasiva] Paquete keep alive recibido: ", paquete_datos, paquete_addrs)
 
             if int(paquete_datos[0]) != 2:
                 keep_alive_tiempo_espera = keep_alive_tiempo_espera - (time.time() - start_time)
