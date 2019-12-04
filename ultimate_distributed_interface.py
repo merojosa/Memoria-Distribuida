@@ -48,8 +48,8 @@ def guardar_metadatos(datos):
     espacio_disponible = ip + 1
 
     for _ in range(int(datos[2])):
-        active_distributed_interface.nodes_location[datos[nodo_id]] = datos[ip]
-        active_distributed_interface.current_size_nodes[datos[nodo_id]] = [espacio_disponible]
+        active_distributed_interface.nodes_location[datos[nodo_id]] = socket.inet_ntoa(datos[ip])
+        active_distributed_interface.current_size_nodes[datos[nodo_id]] = datos[espacio_disponible]
 
     return
 
