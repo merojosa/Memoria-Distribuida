@@ -29,8 +29,11 @@ metadata_size = 18
 byte_table = [0 for x in range(totalSize)]
 count_node = 0
 
-BC_PORT = 5000
-TCP_PORT = 3114
+BC_PORT = 5002
+BC_IP = "10.164.71.255"
+
+MY_IP = "10.164.71.145"
+TCP_PORT = 3117
 
 def set_id():
     global count_node
@@ -124,7 +127,7 @@ def add_to_table(op_id, page_id, page_size, data):
 
     crea_date_bytes = int(time.mktime(creation_date.timetuple()))
     mod_date_bytes = int(time.mktime(modification_date.timetuple()))
-    
+
     bytes_data = node_data_packet_builder.create(op_id, page_id, page_size, crea_date_bytes, mod_date_bytes, data_pos)
     for meta_byte in bytes_data:
         byte_table[metadata_pos] = meta_byte
@@ -140,18 +143,18 @@ def add_to_table(op_id, page_id, page_size, data):
 
 
 def write_to_file():
-    
+
     global metadata_pos
     global data_pos
     global byte_table
-    
+
     meta_pos_bytes = metadata_pos.to_bytes(4, 'big')
     data_pos_bytes = data_pos.to_bytes(4, 'big')
 
     for i in range(0,4):
         byte_table[i] = meta_pos_bytes[i]
         byte_table[i+4] = data_pos_bytes[i]
- 
+
     output_file = open('file', 'wb')
     array_to_file = bytes(byte_table)
     output_file.write(array_to_file)
@@ -167,10 +170,10 @@ def read_from_file():
         input_file = open('file', 'rb')
         try:
             file_array = array("B")
-            file_array.fromstring(input_file.read())   
+            file_array.fromstring(input_file.read())
             byte_table = file_array
             meta_pos_bytes = []
-            data_pos_bytes = [] 
+            data_pos_bytes = []
             for i in range(0,4):
                 meta_pos_bytes.append(byte_table[i])
                 data_pos_bytes.append(byte_table[i+4])
@@ -242,7 +245,7 @@ def get_page(op_id, page_id):
             print(struct.unpack(node_DI_packet_builder.get_save_format(data_size),packet_to_send))
             print("sefesgeg", packet_to_send)
             return (packet_to_send)
-            
+
 
 def send_data(op_id, page_id):
     data = node_DI_packet_builder.create(op_id, page_id, "testingYes")
@@ -261,22 +264,22 @@ def send_size(broadcast_queue_packets):
         size_packet = node_broadcast.create(1 , size_left)
         print(size_left)
         print(size_packet)
-        my_broadcast.sendto(size_packet, ('10.1.255.255', BC_PORT))
+        my_broadcast.sendto(size_packet, (BC_IP, BC_PORT))
         print("enviado")
         time.sleep(2)
 
 
 def listen_interface(waiting_queue_packets, ok_queue):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:        
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
-        s.bind(("10.1.137.45 ",TCP_PORT))
+        s.bind((MY_IP, TCP_PORT))
         while True:
             print("breakpoint")
             s.listen()
             conn, addr = s.accept()
             with conn:
                 print('Connected by', addr)
-                
+
                 data = conn.recv(1024)
 
                 print(data)
@@ -285,7 +288,7 @@ def listen_interface(waiting_queue_packets, ok_queue):
                 if(initial_values[0] == 2):
 
                     ok_queue.put(initial_values[0])
-                    
+
                 elif (initial_values[0] == 0):
 
                     size_array = struct.unpack_from("=BBI", data)
@@ -293,7 +296,7 @@ def listen_interface(waiting_queue_packets, ok_queue):
                     print(distributed_packet_builder.get_save_format(size_array[2]))
                     new_data = struct.unpack(distributed_packet_builder.get_save_format(size_array[2]) , data)
 
-                    waiting_queue_packets.put((new_data[0],new_data[1],new_data[2],new_data[3])) 
+                    waiting_queue_packets.put((new_data[0],new_data[1],new_data[2],new_data[3]))
                     save_page(waiting_queue_packets)
                     print(initial_values)
 
@@ -303,14 +306,14 @@ def listen_interface(waiting_queue_packets, ok_queue):
                     print(conn)
 
                     conn.sendall(ok)
-                
+
                 elif (initial_values[0] == 1):
                     print("label ", data)
                     #b'\x01\x01'
                     ok_data = struct.unpack(distributed_packet_builder.INITIAL_FORMAT , data)
                     print(get_page(ok_data[0], ok_data[1]))
                     conn.sendall((get_page(ok_data[0], ok_data[1])))
-                    
+
 
 def main():
     broadcast_queue_packets = queue.Queue()
@@ -319,7 +322,7 @@ def main():
 
     save_queue_process = threading.Thread(target=listen_interface, args=(save_queue_packets, ok_queue,))
     send_broadcast_process = threading.Thread(target=send_size, args=(ok_queue,))
-    listing_process = threading.Thread(target = list_files) 
+    listing_process = threading.Thread(target = list_files)
 
     send_broadcast_process.start()
     save_queue_process.start()
