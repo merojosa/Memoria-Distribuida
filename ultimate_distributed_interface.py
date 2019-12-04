@@ -9,7 +9,7 @@ import active_distributed_interface
 import paquete_competir
 import paquete_activa
 
-UDP_IP = '10.1.255.255'
+UDP_IP = '192.168.1.255'
 UDP_PORT = 6667
 
 
@@ -105,14 +105,12 @@ def champions(sock, ronda):
 
                 elif datos_ronda > ronda:
                     print("[Champions] Perdi la champions por tener una ronda menor")
-                    time.sleep(tiempo_espera + 1)
                     soy_campeon = False
                     cola_finalizar_proceso.put(soy_campeon)
                     break
 
                 elif datos_mac > direccion_mac:
                     print("[Champions] Perdi la champions por tener una direccion MAC menor")
-                    time.sleep(tiempo_espera + 1)
                     soy_campeon = False
                     cola_finalizar_proceso.put(soy_campeon)
                     break
@@ -151,7 +149,7 @@ def champions(sock, ronda):
 
     hilo_recibir_paquetes.join()
 
-    return ronda, soy_campeon
+    return ronda, soy_campeon, tiempo_espera
 
 
 def tiempo_extra(sock, ronda):
@@ -238,10 +236,10 @@ def tiempo_extra(sock, ronda):
     return soy_campeon
 
 
-def recibir_keep_alive(sock):
+def recibir_keep_alive(sock, tiempo_espera_restante):
     cola_paquetes = queue.Queue()
     cola_finalizar_proceso = queue.Queue()
-    keep_alive_tiempo_espera = 4
+    keep_alive_tiempo_espera = 4 + tiempo_espera_restante
 
     hilo_recibir_paquetes = threading.Thread(target=recibir_paquetes, args=(sock, cola_paquetes, cola_finalizar_proceso,))
     hilo_recibir_paquetes.start()
@@ -253,6 +251,7 @@ def recibir_keep_alive(sock):
         try:
             paquete_recibido_completo = cola_paquetes.get(timeout=keep_alive_tiempo_espera)
             paquete_datos = paquete_recibido_completo[0]
+            print("[Pasiva] Paquete keep alive recibido: ", paquete_datos)
 
             if int(paquete_datos[0]) != 2:
                 keep_alive_tiempo_espera = keep_alive_tiempo_espera - (time.time() - start_time)
@@ -266,6 +265,8 @@ def recibir_keep_alive(sock):
                 print("[Pasiva] Tabla de nodos: ", active_distributed_interface.nodes_location)
                 print("[Pasiva] Tabla de espacio: ", active_distributed_interface.current_size_nodes)
 
+
+            print("[Pasiva] Tiempo restante: ", keep_alive_tiempo_espera)
             if keep_alive_tiempo_espera <= 0:
                 cola_finalizar_proceso.put(True)
                 break
@@ -319,7 +320,7 @@ def iniciar():
 
     while True:
 
-        ronda, resultado = champions(sock, ronda)
+        ronda, resultado, tiempo_espera_restante = champions(sock, ronda)
 
         if resultado == True:
 
@@ -344,7 +345,7 @@ def iniciar():
 
         else:
             print("[Pasiva] Inicializando servicios")
-            hilo_recibir_keep_alive = threading.Thread(target=recibir_keep_alive, args=(sock,))
+            hilo_recibir_keep_alive = threading.Thread(target=recibir_keep_alive, args=(sock, tiempo_espera_restante))
             hilo_recibir_keep_alive.start()
             hilo_recibir_keep_alive.join()
             print("[Pasiva] Limite en el retraso de los paquetes Keep Alive, inicializando champions")
