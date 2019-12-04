@@ -25,7 +25,7 @@ current_size_nodes = {}
 
 
 LOCAL_PORT = 2002
-MY_IP = '10.1.138.168'
+MY_IP = '10.1.137.218'
 
 connection_to_local = None
 
@@ -146,7 +146,7 @@ def process_local_packet(local_packet_queue, update_metadata_queue):
             # Update metadata
             page_location[page_id] = node_id
             current_size_nodes[node_id] = answer_packet[2]
-            update_metadata_queue.put([UPDATE_NODE, node_id, nodes_location[node_id], answer_packet[2]])
+            update_metadata_queue.put([UPDATE_PAGE, page_id, node_id])
 
             # Create an ok packet with a given page id and send it to local
             send_packet_local(distributed_packet_builder.create_ok_local_packet(answer_packet[1]))
@@ -176,4 +176,3 @@ def execute(update_metadata_queue):
     receive_local_packet_thread.join()
     process_local_packet_thread.join()
     enroll_node_thread.join()
-
