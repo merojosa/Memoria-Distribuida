@@ -25,7 +25,8 @@ current_size_nodes = {}
 
 
 LOCAL_PORT = 2002
-MY_IP = '10.1.137.218'
+MY_IP = "10.1.138.199"
+UDP_IP = "10.164.71.255"
 
 connection_to_local = None
 
@@ -66,7 +67,7 @@ def enroll_node(update_metadata_queue):
 
     socket_broadcast_node = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     socket_broadcast_node.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    socket_broadcast_node.bind(("10.1.255.255", BROADCAST_NODES_PORT))
+    socket_broadcast_node.bind((UDP_IP, BROADCAST_NODES_PORT))
 
 
     while True:

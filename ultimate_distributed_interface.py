@@ -4,6 +4,7 @@ import struct
 import time
 import queue
 import threading
+import os
 
 import active_distributed_interface
 import paquete_competir
@@ -11,8 +12,8 @@ import paquete_activa
 
 from subprocess import call
 
-TPC_IP = "192.168.1.199"
-UDP_IP = '10.1.255.255'
+TCP_IP = "10.1.138.199"
+UDP_IP = '10.164.71.255'
 UDP_PORT = 9876
 
 
@@ -336,8 +337,12 @@ def iniciar():
 
                 print("[Activa] Adquiriendo IP")
 
-                call(["sudo", "ip", "addr", "flush", "dev", "eth0"])
-                call(["ip", "a", "add", TPC_IP + "/255.255.255.0", "dev", "eth0"])
+                os.system("sudo ifconfig eth0 down")
+                #call(["sudo", "ip", "addr", "flush", "dev", "eth0"])
+                #call(["ip", "a", "add", TPC_IP + "/255.255.0.0", "dev", "eth0"])
+                os.system("sudo ifconfig eth0 " + TCP_IP)
+                os.system("sudo ifconfig eth0 up")
+                time.sleep(5)
 
                 print("[Activa] Inicializando servicios")
 
