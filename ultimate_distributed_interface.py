@@ -13,9 +13,9 @@ import paquete_activa
 from subprocess import call
 
 TCP_IP = "10.1.138.199"
-UDP_IP = '10.164.71.135'
+UDP_IP = '10.164.71.255'
 BROADACAST_UDP = "10.164.71.255" 
-UDP_PORT = 9876
+UDP_PORT = 6666
 
 
 def obener_metadatos():
@@ -73,6 +73,28 @@ def recibir_paquetes(sock, paquetes, fin):
         except socket.timeout:
             if fin.empty() == False:
                 break
+    return
+
+
+def enviar_yo_soy_activa(sock):
+    hilo_recibir_paquetes = threading.Thread(target=recibir_paquetes, args=(sock, cola_paquetes, cola_finalizar_proceso,))
+    hilo_recibir_paquetes.start()
+
+    while True:
+
+        try:
+            paquete_recibido_completo = cola_paquetes.get()
+            paquete_datos = paquete_recibido_completo[0]
+
+            if int(paquete_datos[0]) == 0:
+                paquete = obener_metadatos()
+                sock.sendto(paquete, (UDP_IP, UDP_PORT))
+
+        except queue.Empty:
+            continue
+
+    hilo_recibir_paquetes.join()
+
     return
 
 
@@ -345,8 +367,11 @@ def iniciar():
 
                 hilo_interfaz_distribuida = threading.Thread(target=active_distributed_interface.execute, args=(cola_actualizaciones,))
                 hilo_enviar_keep_alive = threading.Thread(target=enviar_keep_alive, args=(sock, cola_actualizaciones,))
+                hilo_enviar_yo_soy_activa = threading.Thread(target=enviar_yo_soy_activa, args=(sock,))
                 hilo_interfaz_distribuida.start()
                 hilo_enviar_keep_alive.start()
+                hilo_enviar_yo_soy_activa.start()
+                hilo_enviar_yo_soy_activa.join()
                 hilo_interfaz_distribuida.join()
                 hilo_enviar_keep_alive.join()
                 break
