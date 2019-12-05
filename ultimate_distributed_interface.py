@@ -13,7 +13,8 @@ import paquete_activa
 from subprocess import call
 
 TCP_IP = "10.1.138.199"
-UDP_IP = '10.164.71.255'
+UDP_IP = '10.164.71.135'
+BROADACAST_UDP = "10.164.71.255" 
 UDP_PORT = 9876
 
 
@@ -337,12 +338,8 @@ def iniciar():
 
                 print("[Activa] Adquiriendo IP")
 
-                os.system("sudo ifconfig eth0 down")
-                #call(["sudo", "ip", "addr", "flush", "dev", "eth0"])
-                #call(["ip", "a", "add", TPC_IP + "/255.255.0.0", "dev", "eth0"])
-                os.system("sudo ifconfig eth0 " + TCP_IP)
-                os.system("sudo ifconfig eth0 up")
-                time.sleep(5)
+                call(["sudo", "ip", "addr", "flush", "dev", "enp2s0"])
+                call(["ip", "a", "add", TCP_IP + "/255.255.0.0", "broadcast", BROADACAST_UDP ,"dev", "enp2s0"])
 
                 print("[Activa] Inicializando servicios")
 
