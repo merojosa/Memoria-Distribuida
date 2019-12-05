@@ -77,6 +77,8 @@ def recibir_paquetes(sock, paquetes, fin):
 
 
 def enviar_yo_soy_activa(sock):
+    cola_paquetes = queue.Queue()
+    cola_finalizar_proceso = queue.Queue()
     hilo_recibir_paquetes = threading.Thread(target=recibir_paquetes, args=(sock, cola_paquetes, cola_finalizar_proceso,))
     hilo_recibir_paquetes.start()
 
