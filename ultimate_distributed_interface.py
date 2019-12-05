@@ -15,7 +15,7 @@ from subprocess import call
 TCP_IP = "10.1.138.199"
 UDP_IP = '10.164.71.255'
 BROADACAST_UDP = "10.164.71.255" 
-UDP_PORT = 6666
+UDP_PORT = 6667
 
 
 def obener_metadatos():
@@ -87,6 +87,8 @@ def enviar_yo_soy_activa(sock):
         try:
             paquete_recibido_completo = cola_paquetes.get()
             paquete_datos = paquete_recibido_completo[0]
+            paquete_addrs = paquete_recibido_completo[1]
+            print("[Activa] Paquete de nueva interfaz recibido:", paquete_datos, paquete_addrs)
 
             if int(paquete_datos[0]) == 0:
                 paquete = obener_metadatos()
@@ -268,7 +270,7 @@ def tiempo_extra(sock, ronda):
 def recibir_keep_alive(sock, tiempo_espera_restante):
     cola_paquetes = queue.Queue()
     cola_finalizar_proceso = queue.Queue()
-    keep_alive_tiempo_espera = 4 + tiempo_espera_restante + 1
+    keep_alive_tiempo_espera = 4 + tiempo_espera_restante + 3
 
     hilo_recibir_paquetes = threading.Thread(target=recibir_paquetes, args=(sock, cola_paquetes, cola_finalizar_proceso,))
     hilo_recibir_paquetes.start()
@@ -359,6 +361,8 @@ def iniciar():
             resultado = tiempo_extra(sock, ronda)
 
             if resultado == True:
+                hilo_enviar_yo_soy_activa = threading.Thread(target=enviar_yo_soy_activa, args=(sock,))
+                hilo_enviar_yo_soy_activa.start()
 
                 print("[Activa] Adquiriendo IP")
 
@@ -369,10 +373,10 @@ def iniciar():
 
                 hilo_interfaz_distribuida = threading.Thread(target=active_distributed_interface.execute, args=(cola_actualizaciones,))
                 hilo_enviar_keep_alive = threading.Thread(target=enviar_keep_alive, args=(sock, cola_actualizaciones,))
-                hilo_enviar_yo_soy_activa = threading.Thread(target=enviar_yo_soy_activa, args=(sock,))
+                
                 hilo_interfaz_distribuida.start()
                 hilo_enviar_keep_alive.start()
-                hilo_enviar_yo_soy_activa.start()
+                
                 hilo_enviar_yo_soy_activa.join()
                 hilo_interfaz_distribuida.join()
                 hilo_enviar_keep_alive.join()

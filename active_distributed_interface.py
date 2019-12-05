@@ -8,8 +8,8 @@ import packet_builders.distributed_packet_builder as distributed_packet_builder
 import packet_builders.node_ok_packet_builder as node_ok_packet_builder
 from enum_operation_code import Operation_Code
 
-NODES_PORT = 3116
-BROADCAST_NODES_PORT = 5002
+NODES_PORT = 3114
+BROADCAST_NODES_PORT = 5000
 
 UPDATE_PAGE = 0
 UPDATE_NODE = 1
@@ -24,7 +24,7 @@ nodes_location = {}
 current_size_nodes = {}
 
 
-LOCAL_PORT = 2002
+LOCAL_PORT = 2000
 MY_IP = "10.1.138.199"
 UDP_IP = "10.164.71.255"
 
